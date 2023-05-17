@@ -2,9 +2,10 @@ use crate::elf::ELF_MAGIC;
 
 #[derive(Debug, Clone)]
 pub struct Elf64<'a> {
-    header: &'a Elf64Header,
-    program_headers: &'a [Elf64ProgramHeader],
-    section_headers: &'a [Elf64SectionHeader],
+    pub header: &'a Elf64Header,
+    pub program_headers: &'a [Elf64ProgramHeader],
+    pub section_headers: &'a [Elf64SectionHeader],
+    // sections: [u8],
 }
 
 /// We must assume a byte-for-byte representation because ELF files can be deployed
@@ -108,7 +109,7 @@ impl Elf64ProgramHeader {
         let offset = header.e_phoff as usize;
         let length = (header.e_phentsize as usize) * (header.e_phnum as usize);
 
-        let phbuf = &buf[offset..];
+        let phbuf = &buf[offset..(offset + length)];
         if phbuf.len() < length {
             return Err(Error::Message("invalid program headers length".to_string()));
         }
@@ -123,16 +124,16 @@ impl Elf64ProgramHeader {
 #[derive(Debug, Clone)]
 #[repr(C, packed)]
 pub struct Elf64SectionHeader {
-    sh_name: u32,
-    sh_type: u32,
-    sh_flags: u64,
-    sh_addr: u64,
-    sh_offset: u64,
-    sh_size: u64,
-    sh_link: u32,
-    sh_info: u32,
-    sh_addralign: u64,
-    sh_entsize: u64,
+    pub sh_name: u32,
+    pub sh_type: u32,
+    pub sh_flags: u64,
+    pub sh_addr: u64,
+    pub sh_offset: u64,
+    pub sh_size: u64,
+    pub sh_link: u32,
+    pub sh_info: u32,
+    pub sh_addralign: u64,
+    pub sh_entsize: u64,
 }
 
 impl Elf64SectionHeader {
@@ -143,7 +144,7 @@ impl Elf64SectionHeader {
         let offset = header.e_shoff as usize;
         let length = (header.e_shentsize as usize) * (header.e_shnum as usize);
 
-        let shbuf = &buf[offset..];
+        let shbuf = &buf[offset..(offset + length)];
         if shbuf.len() < length {
             return Err(Error::Message("invalid section headers length".to_string()));
         }
