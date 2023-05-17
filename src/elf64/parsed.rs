@@ -1,11 +1,11 @@
+use crate::elf::ELF_MAGIC;
+
 #[derive(Debug, Clone)]
 pub struct Elf64<'a> {
     header: &'a Elf64Header,
     program_headers: &'a [Elf64ProgramHeader],
     section_headers: &'a [Elf64SectionHeader],
 }
-
-const ELF_MAGIC: [u8; 4] = [0x7f, 0x45, 0x4c, 0x46];
 
 /// We must assume a byte-for-byte representation because ELF files can be deployed
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
