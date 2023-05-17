@@ -1,13 +1,13 @@
 use std::{fs::File, io::Read};
 
-use elf::elf64::parsed::Elf64;
+use elf::elf64::parsed::Elf64Headers;
 
 fn main() {
     let mut file = File::open("/bin/touch").unwrap();
     let mut buf = vec![];
     file.read_to_end(&mut buf).unwrap();
 
-    let elf = Elf64::parse(&buf[..]).unwrap();
+    let elf = Elf64Headers::parse(&buf[..]).unwrap();
     println!("{:?}", elf);
 
     for section in elf.section_headers {

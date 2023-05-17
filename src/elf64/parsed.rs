@@ -1,17 +1,19 @@
 use crate::elf::ELF_MAGIC;
 
+/// A raw representation of the headers in an ELF file.
+/// This includes the ELF headers, the program headers, and
+/// the section headers.
 #[derive(Debug, Clone)]
-pub struct Elf64<'a> {
+pub struct Elf64Headers<'a> {
     pub header: &'a Elf64Header,
     pub program_headers: &'a [Elf64ProgramHeader],
     pub section_headers: &'a [Elf64SectionHeader],
-    // sections: [u8],
 }
 
 /// We must assume a byte-for-byte representation because ELF files can be deployed
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
-impl<'a> Elf64<'a> {
-    pub fn parse(buf: &'a [u8]) -> Result<Elf64<'a>, Error> {
+impl<'a> Elf64Headers<'a> {
+    pub fn parse(buf: &'a [u8]) -> Result<Elf64Headers<'a>, Error> {
         let header = Elf64Header::from_buffer(buf)?;
 
         if header.e_ident.magic != ELF_MAGIC {
