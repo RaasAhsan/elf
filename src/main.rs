@@ -7,6 +7,6 @@ fn main() {
     let mut buf = vec![];
     file.read_to_end(&mut buf).unwrap();
 
-    let elf = Elf64::from(&buf[..]).unwrap();
+    let elf = Elf64::parse(&buf[..]).unwrap();
     println!("{:?}", elf);
 }

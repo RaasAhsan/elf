@@ -10,7 +10,7 @@ pub struct Elf64<'a> {
 /// We must assume a byte-for-byte representation because ELF files can be deployed
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
 impl<'a> Elf64<'a> {
-    pub fn from(buf: &'a [u8]) -> Result<Elf64<'a>, Error> {
+    pub fn parse(buf: &'a [u8]) -> Result<Elf64<'a>, Error> {
         let header = Elf64Header::from_buffer(buf)?;
 
         if header.e_ident.magic != ELF_MAGIC {
@@ -42,6 +42,7 @@ impl<'a> Elf64<'a> {
 static_assertions::const_assert!(std::mem::size_of::<Elf64Header>() == 64);
 static_assertions::const_assert!(std::mem::size_of::<Elf64Ident>() == 16);
 static_assertions::const_assert!(std::mem::size_of::<Elf64ProgramHeader>() == 0x38);
+static_assertions::const_assert!(std::mem::size_of::<Elf64SectionHeader>() == 0x40);
 
 #[derive(Debug, Clone)]
 #[repr(C, packed)]
