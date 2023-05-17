@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use rdb::elf64::Elf64;
+use elf::elf64::Elf64;
 
 fn main() {
     let mut file = File::open("/bin/touch").unwrap();
