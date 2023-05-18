@@ -2,12 +2,9 @@ use std::{collections::HashMap, ffi::CStr};
 
 use crate::elf::ELF_MAGIC;
 
-const TEXT_SECTION: &str = ".text";
-
 /// A raw representation of the headers in an ELF file.
 /// This includes the ELF headers, the program headers, and
 /// the section headers.
-#[derive(Debug, Clone)]
 pub struct Elf64Headers<'a> {
     pub header: &'a Elf64Header,
     pub program_headers: &'a [Elf64ProgramHeader],
@@ -69,7 +66,7 @@ static_assertions::const_assert!(std::mem::size_of::<Elf64Ident>() == 16);
 static_assertions::const_assert!(std::mem::size_of::<Elf64ProgramHeader>() == 0x38);
 static_assertions::const_assert!(std::mem::size_of::<Elf64SectionHeader>() == 0x40);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Elf64Header {
     pub e_ident: Elf64Ident,
@@ -100,7 +97,7 @@ impl Elf64Header {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Elf64Ident {
     magic: [u8; 4],

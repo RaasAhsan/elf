@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use elf::elf64::parsed::Elf64Headers;
+use elf::elf64::raw::Elf64Headers;
 
 fn main() {
     let mut file = File::open("/bin/touch").unwrap();
