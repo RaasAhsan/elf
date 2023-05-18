@@ -6,7 +6,7 @@ use crate::elf::ELF_MAGIC;
 /// This includes the ELF headers, the program headers, and
 /// the section headers.
 pub struct Elf64Headers<'a> {
-    pub header: &'a Elf64Header,
+    pub header: &'a Elf64FileHeader,
     pub program_headers: &'a [Elf64ProgramHeader],
     pub section_headers: &'a [Elf64SectionHeader],
     pub sh_names: StringTable<'a>,
@@ -17,7 +17,7 @@ pub struct Elf64Headers<'a> {
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
 impl<'a> Elf64Headers<'a> {
     pub fn parse(buf: &'a [u8]) -> Result<Elf64Headers<'a>, Error> {
-        let header = Elf64Header::from_buffer(buf)?;
+        let header = Elf64FileHeader::from_buffer(buf)?;
 
         if header.e_ident.magic != ELF_MAGIC {
             return Err(Error::InvalidMagicNumber);
@@ -61,14 +61,14 @@ impl<'a> Elf64Headers<'a> {
     }
 }
 
-static_assertions::const_assert!(std::mem::size_of::<Elf64Header>() == 64);
+static_assertions::const_assert!(std::mem::size_of::<Elf64FileHeader>() == 64);
 static_assertions::const_assert!(std::mem::size_of::<Elf64Ident>() == 16);
 static_assertions::const_assert!(std::mem::size_of::<Elf64ProgramHeader>() == 0x38);
 static_assertions::const_assert!(std::mem::size_of::<Elf64SectionHeader>() == 0x40);
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
-pub struct Elf64Header {
+pub struct Elf64FileHeader {
     pub e_ident: Elf64Ident,
     pub e_type: u16,
     pub e_machine: u16,
@@ -85,14 +85,14 @@ pub struct Elf64Header {
     pub e_shstrndx: u16,
 }
 
-impl Elf64Header {
-    pub fn from_buffer<'a>(buf: &'a [u8]) -> Result<&'a Elf64Header, Error> {
-        if buf.len() < std::mem::size_of::<Elf64Header>() {
+impl Elf64FileHeader {
+    pub fn from_buffer<'a>(buf: &'a [u8]) -> Result<&'a Elf64FileHeader, Error> {
+        if buf.len() < std::mem::size_of::<Elf64FileHeader>() {
             return Err(Error::Message("invalid header length".to_string()));
         }
 
-        let ptr = buf.as_ptr() as *const Elf64Header;
-        let header: &'a Elf64Header = unsafe { &*ptr };
+        let ptr = buf.as_ptr() as *const Elf64FileHeader;
+        let header: &'a Elf64FileHeader = unsafe { &*ptr };
         Ok(header)
     }
 }
@@ -100,13 +100,13 @@ impl Elf64Header {
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Elf64Ident {
-    magic: [u8; 4],
-    class: u8,
-    data: u8,
-    version: u8,
-    os_abi: u8,
-    abi_version: u8,
-    _padding: [u8; 7],
+    pub magic: [u8; 4],
+    pub class: u8,
+    pub data: u8,
+    pub version: u8,
+    pub os_abi: u8,
+    pub abi_version: u8,
+    pub _padding: [u8; 7],
 }
 
 #[derive(Debug, Clone)]
@@ -125,7 +125,7 @@ pub struct Elf64ProgramHeader {
 impl Elf64ProgramHeader {
     pub fn parse_headers<'a>(
         buf: &'a [u8],
-        header: &Elf64Header,
+        header: &Elf64FileHeader,
     ) -> Result<&'a [Elf64ProgramHeader], Error> {
         let offset = header.e_phoff as usize;
         let length = (header.e_phentsize as usize) * (header.e_phnum as usize);
@@ -160,7 +160,7 @@ pub struct Elf64SectionHeader {
 impl Elf64SectionHeader {
     pub fn parse_headers<'a>(
         buf: &'a [u8],
-        header: &Elf64Header,
+        header: &Elf64FileHeader,
     ) -> Result<&'a [Elf64SectionHeader], Error> {
         let offset = header.e_shoff as usize;
         let length = (header.e_shentsize as usize) * (header.e_shnum as usize);
