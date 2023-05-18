@@ -8,25 +8,13 @@ fn main() {
     file.read_to_end(&mut buf).unwrap();
 
     let elf = Elf64Headers::parse(&buf[..]).unwrap();
-    println!("{:?}", elf);
+    // println!("{:?}", elf);
 
-    for section in elf.section_headers {
-        if section.sh_type == 0x3 {
-            let offset = section.sh_offset as usize;
-            let size = section.sh_size as usize;
-            let bytes = &buf[offset..(offset + size)];
+    // TODO: unaligned accesses
 
-            let mut strings = vec![];
-            let mut start = 0;
+    let text_headers = elf.get_header(".text").unwrap();
+    let data = text_headers.get_section_buffer(&buf[..]).unwrap();
+    println!("{:?}", data);
 
-            for (current, b) in bytes.iter().enumerate() {
-                if *b == 0x0 {
-                    strings.push(std::str::from_utf8(&bytes[start..current]).unwrap());
-                    start = current + 1;
-                }
-            }
-
-            println!("{:?}", strings);
-        }
-    }
+    // println!("{:?}", elf.sh_names.get_all_strings());
 }
