@@ -1,7 +1,11 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
 use clap::Parser;
-use elf::elf64::raw::{Elf64Headers, StringTable};
+use elf::{
+    elf::ObjectType,
+    elf64::raw::{Elf64Headers, StringTable},
+};
+use num_traits::FromPrimitive;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -34,26 +38,57 @@ fn main() {
 
     if cli.file_header {
         let machine = elf.header.e_machine;
-        let output = format!(
+        let elf_type = elf.header.e_type;
+        let entry = elf.header.e_entry;
+        println!(
             "ELF file header: \n\
             \tClass: {} \n\
-            \tMachine: 0x{:02x}",
-            elf.header.e_ident.class, machine
+            \tMachine: 0x{:02x}\n\
+            \tData: {}\n\
+            \tType: {}\n\
+            \tEntrypoint: 0x{:08x}",
+            elf.header.e_ident.class, machine, elf.header.e_ident.data, elf_type, entry
         );
 
-        println!("{output}")
+        println!();
+    }
+
+    if cli.section_headers {
+        println!("ELF section headers:");
+
+        for s in elf.section_headers.iter() {
+            // TODO: ideally use a path dependent type here
+            let name = elf
+                .sh_names
+                .get_string(s.sh_name as usize)
+                .to_str()
+                .unwrap();
+            println!("\t{name}");
+        }
+
+        println!();
+    }
+
+    if cli.program_headers {
+        println!("ELF program headers:");
+
+        for h in elf.program_headers.iter() {
+            let p_type = h.p_type;
+            let elf_p_type = ObjectType::from_u32(p_type);
+            let p_vaddr = h.p_vaddr;
+            let p_memsz = h.p_memsz;
+            let p_offset = h.p_offset;
+            let p_filesz = h.p_filesz;
+            let p_flags = h.p_flags;
+            println!(
+                "\tType: {elf_p_type:?} (0x{:08x}), Offset: 0x{:08x}, Start: 0x{:08x}, Mem Size: 0x{:08x}, File Size: 0x{:08x}, Flags: {:b}",
+                p_type, p_offset, p_vaddr, p_memsz, p_filesz, p_flags
+            );
+        }
     }
 
     let text_headers = elf.get_header(".text").unwrap();
     let data = text_headers.get_section_buffer(&buf[..]).unwrap();
     // println!("{:?}", data);
-
-    for s in elf.section_headers.iter() {
-        if s.sh_type == 0x03 {
-            let table = StringTable::parse(&buf[..], s).unwrap();
-            println!("{:?}", table.get_all_strings());
-        }
-    }
-
-    println!("{:?}", elf.sh_names.get_all_strings());
+    // println!("{:?}", elf.sh_names.get_all_strings());
 }

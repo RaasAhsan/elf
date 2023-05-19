@@ -112,14 +112,14 @@ pub struct Elf64Ident {
 #[derive(Debug, Clone)]
 #[repr(C, packed)]
 pub struct Elf64ProgramHeader {
-    p_type: u32,
-    p_flags: u32,
-    p_offset: u64,
-    p_vaddr: u64,
-    p_paddr: u64,
-    p_filesz: u64,
-    p_memsz: u64,
-    p_align: u64,
+    pub p_type: u32,
+    pub p_flags: u32,
+    pub p_offset: u64,
+    pub p_vaddr: u64,
+    pub p_paddr: u64,
+    pub p_filesz: u64,
+    pub p_memsz: u64,
+    pub p_align: u64,
 }
 
 impl Elf64ProgramHeader {
