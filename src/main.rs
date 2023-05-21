@@ -96,8 +96,13 @@ fn main() {
 
     if cli.symbols {
         let sh = elf.find_section_header(0x02).unwrap();
+        let name = elf
+            .sh_names
+            .get_string(sh.sh_name as usize)
+            .to_str()
+            .unwrap();
 
-        println!("Symbol table:");
+        println!("Symbol table ({name}):");
 
         let symtab = SymbolTable::parse(&buf, sh).unwrap();
 

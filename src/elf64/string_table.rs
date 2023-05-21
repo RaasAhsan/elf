@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::ffi::{c_char, CStr};
 
 use super::{header::Elf64SectionHeader, Error};
 
@@ -26,7 +26,7 @@ impl<'a> StringTable<'a> {
         if offset >= self.buf.len() {
             panic!("invalid string access");
         }
-        let ptr = self.buf.as_ptr() as *const u8;
+        let ptr = self.buf.as_ptr() as *const c_char;
         unsafe { CStr::from_ptr(ptr.add(offset)) }
     }
 
