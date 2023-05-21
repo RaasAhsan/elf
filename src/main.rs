@@ -3,7 +3,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 use clap::Parser;
 use elf::{
     elf::ObjectType,
-    elf64::raw::{Elf64Headers, StringTable},
+    elf64::{header::Elf64Headers, string_table::StringTable, symbol_table::SymbolTable},
 };
 use num_traits::FromPrimitive;
 
@@ -21,6 +21,9 @@ struct Cli {
     /// Display the ELF program headers
     #[arg(short, long)]
     section_headers: bool,
+
+    #[arg(long)]
+    symbols: bool,
 
     /// Path to the ELF file
     file: PathBuf,
@@ -55,6 +58,7 @@ fn main() {
 
     if cli.section_headers {
         println!("ELF section headers:");
+        println!("\t{:<24} Type", "Name");
 
         for s in elf.section_headers.iter() {
             // TODO: ideally use a path dependent type here
@@ -63,7 +67,8 @@ fn main() {
                 .get_string(s.sh_name as usize)
                 .to_str()
                 .unwrap();
-            println!("\t{name}");
+            let sh_type = s.sh_type;
+            println!("\t{name:<24} 0x{sh_type:02x}");
         }
 
         println!();
@@ -83,6 +88,38 @@ fn main() {
             println!(
                 "\tType: {elf_p_type:?} (0x{:08x}), Offset: 0x{:08x}, Start: 0x{:08x}, Mem Size: 0x{:08x}, File Size: 0x{:08x}, Flags: {:b}",
                 p_type, p_offset, p_vaddr, p_memsz, p_filesz, p_flags
+            );
+        }
+
+        println!();
+    }
+
+    if cli.symbols {
+        let sh = elf.find_section_header(0x02).unwrap();
+
+        println!("Symbol table:");
+
+        let symtab = SymbolTable::parse(&buf, sh).unwrap();
+
+        // the sh_link attribute for a symtab section designates the string table for symbol names
+        let symstr_hdr = elf
+            .get_section_header_by_index(sh.sh_link as usize)
+            .unwrap();
+        let strtab = StringTable::parse(&buf, symstr_hdr).unwrap();
+
+        for (index, sym) in symtab.iter().enumerate() {
+            let st_name = sym.st_name;
+            let st_value = sym.st_value;
+            let st_size = sym.st_size;
+
+            let name = if st_name == 0 {
+                ""
+            } else {
+                strtab.get_string(st_name as usize).to_str().unwrap()
+            };
+            println!(
+                "\t{index:>3}: {:<16} 0x{:08x} {:<5}",
+                name, st_value, st_size
             );
         }
     }

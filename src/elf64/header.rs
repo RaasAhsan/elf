@@ -1,6 +1,8 @@
-use std::{collections::HashMap, ffi::CStr};
+use std::collections::HashMap;
 
 use crate::elf::ELF_MAGIC;
+
+use super::{string_table::StringTable, Error};
 
 /// A raw representation of the headers in an ELF file.
 /// This includes the ELF headers, the program headers, and
@@ -58,6 +60,20 @@ impl<'a> Elf64Headers<'a> {
 
     pub fn get_header(&self, name: &str) -> Option<&Elf64SectionHeader> {
         self.sh_by_name.get(name).copied()
+    }
+
+    pub fn get_section_header_by_index(&self, index: usize) -> Option<&Elf64SectionHeader> {
+        if index >= self.section_headers.len() {
+            return None;
+        }
+
+        Some(&self.section_headers[index])
+    }
+
+    pub fn find_section_header(&self, sh_type: u32) -> Option<&Elf64SectionHeader> {
+        self.section_headers
+            .iter()
+            .find(|&hdr| hdr.sh_type == sh_type)
     }
 }
 
@@ -189,63 +205,4 @@ impl Elf64SectionHeader {
 
         Ok(buf)
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct StringTable<'a> {
-    buf: &'a [u8],
-}
-
-impl<'a> StringTable<'a> {
-    pub fn parse(buf: &'a [u8], hdr: &Elf64SectionHeader) -> Result<StringTable<'a>, Error> {
-        if hdr.sh_type != 0x03 {
-            return Err(Error::Message("section not a string table".to_string()));
-        }
-
-        let buf = hdr.get_section_buffer(buf)?;
-
-        if !buf.is_empty() && buf[0] != 0x00 {
-            return Err(Error::Message("invalid string table".to_string()));
-        }
-
-        Ok(StringTable { buf })
-    }
-
-    pub fn get_string(&self, offset: usize) -> &'a CStr {
-        if offset >= self.buf.len() {
-            panic!("invalid string access");
-        }
-        let ptr = self.buf.as_ptr() as *const u8;
-        unsafe { CStr::from_ptr(ptr.add(offset)) }
-    }
-
-    pub fn get_all_strings(&self) -> Vec<&'a CStr> {
-        let mut strings = vec![];
-        let mut start = 0;
-        for i in 0..(self.buf.len()) {
-            if self.buf[i] == 0 {
-                strings.push(self.get_string(start));
-                start = i + 1;
-            }
-        }
-        strings
-    }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("open error: {0}")]
-    Open(std::io::Error),
-    #[error("read error: {0}")]
-    Read(std::io::Error),
-    #[error("invalid magic number")]
-    InvalidMagicNumber,
-    #[error("unexpected class")]
-    UnsupportedClass,
-    #[error("invalid class")]
-    InvalidClass,
-    #[error("invalid endianness")]
-    InvalidEndianness,
-    #[error("error: {0}")]
-    Message(String),
 }
