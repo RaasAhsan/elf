@@ -1,6 +1,7 @@
 # elf &emsp; [![Build Status]][actions]
 
 [Build Status]: https://img.shields.io/github/actions/workflow/status/RaasAhsan/elf/ci.yml?branch=master
+[actions]: https://github.com/RaasAhsan/elf/actions?query=branch%3Amaster
 
 Elf is a set of tools and libraries used for interacting with and manipulating ELF (Executable and Linking Format) files. 
 
