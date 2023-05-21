@@ -2,7 +2,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::ObjectType,
+    elf::{ObjectType, SymbolType},
     elf64::{header::Elf64Headers, string_table::StringTable, symbol_table::SymbolTable},
 };
 use num_traits::FromPrimitive;
@@ -111,15 +111,19 @@ fn main() {
             let st_name = sym.st_name;
             let st_value = sym.st_value;
             let st_size = sym.st_size;
+            let st_info = sym.st_info;
+
+            let st_type = SymbolType::from_u8(st_info & 0xf).unwrap();
 
             let name = if st_name == 0 {
                 ""
             } else {
                 strtab.get_string(st_name as usize).to_str().unwrap()
             };
+
             println!(
-                "\t{index:>3}: {:<16} 0x{:08x} {:<5}",
-                name, st_value, st_size
+                "\t{index:>3}: {:<16} 0x{:08x} {:<5} {:?}",
+                name, st_value, st_size, st_type
             );
         }
     }
