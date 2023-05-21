@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::elf::ELF_MAGIC;
+use crate::elf::{ELF_CLASS_64, ELF_DATA_LITTLE, ELF_MAGIC};
 
 use super::{string_table::StringTable, Error};
 
@@ -25,13 +25,11 @@ impl<'a> Elf64Headers<'a> {
             return Err(Error::InvalidMagicNumber);
         }
 
-        // Assert 64-bit ELF
-        if header.e_ident.class != 0x02 {
+        if header.e_ident.class != ELF_CLASS_64 {
             return Err(Error::InvalidClass);
         }
 
-        // Assert little endianness
-        if header.e_ident.data != 0x01 {
+        if header.e_ident.data != ELF_DATA_LITTLE {
             return Err(Error::InvalidEndianness);
         }
 
@@ -58,7 +56,7 @@ impl<'a> Elf64Headers<'a> {
         })
     }
 
-    pub fn get_header(&self, name: &str) -> Option<&Elf64SectionHeader> {
+    pub fn get_section_header_by_name(&self, name: &str) -> Option<&Elf64SectionHeader> {
         self.sh_by_name.get(name).copied()
     }
 

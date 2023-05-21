@@ -2,7 +2,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{ObjectType, SymbolType},
+    elf::{ObjectType, SymbolType, SHT_SYMTAB},
     elf64::{header::Elf64Headers, string_table::StringTable, symbol_table::SymbolTable},
 };
 use num_traits::FromPrimitive;
@@ -58,7 +58,7 @@ fn main() {
 
     if cli.section_headers {
         println!("ELF section headers:");
-        println!("\t{:<24} Type", "Name");
+        println!("\t{:<24} {:<16} {:<16}", "Name", "Type", "Size");
 
         for s in elf.section_headers.iter() {
             // TODO: ideally use a path dependent type here
@@ -68,7 +68,8 @@ fn main() {
                 .to_str()
                 .unwrap();
             let sh_type = s.sh_type;
-            println!("\t{name:<24} 0x{sh_type:02x}");
+            let sh_size = s.sh_size;
+            println!("\t{name:<24} {sh_type:016x} {sh_size:016x}");
         }
 
         println!();
@@ -95,7 +96,7 @@ fn main() {
     }
 
     if cli.symbols {
-        let sh = elf.find_section_header(0x02).unwrap();
+        let sh = elf.find_section_header(SHT_SYMTAB).unwrap();
         let name = elf
             .sh_names
             .get_string(sh.sh_name as usize)
@@ -127,13 +128,13 @@ fn main() {
             };
 
             println!(
-                "\t{index:>3}: {:<16} 0x{:08x} {:<5} {:?}",
+                "\t{index:>3}: {:<16} 0x{:08x} {:>6} {:?}",
                 name, st_value, st_size, st_type
             );
         }
     }
 
-    let text_headers = elf.get_header(".text").unwrap();
+    let text_headers = elf.get_section_header_by_name(".text").unwrap();
     let data = text_headers.get_section_buffer(&buf[..]).unwrap();
     // println!("{:?}", data);
     // println!("{:?}", elf.sh_names.get_all_strings());

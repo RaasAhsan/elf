@@ -2,6 +2,18 @@ use num_derive::{FromPrimitive, ToPrimitive};
 
 pub const ELF_MAGIC: [u8; 4] = [0x7f, 0x45, 0x4c, 0x46];
 
+pub const ELF_CLASS_32: u8 = 0x01;
+pub const ELF_CLASS_64: u8 = 0x02;
+
+pub const ELF_DATA_LITTLE: u8 = 0x01;
+pub const ELF_DATA_BIG: u8 = 0x02;
+
+pub const SHT_NULL: u32 = 0x00;
+pub const SHT_PROGBITS: u32 = 0x01;
+pub const SHT_SYMTAB: u32 = 0x02;
+pub const SHT_STRTAB: u32 = 0x03;
+pub const SHT_RELA: u32 = 0x04;
+
 #[derive(Debug, Clone, ToPrimitive, FromPrimitive)]
 pub enum ObjectType {
     None = 0x0,
@@ -11,7 +23,7 @@ pub enum ObjectType {
     Core = 0x4,
 }
 
-#[derive(Debug, Clone, ToPrimitive, FromPrimitive)]
+#[derive(Debug, Clone)]
 pub enum SectionType {
     Null = 0x0,
     Progbits = 0x1,
@@ -31,6 +43,7 @@ pub enum SectionType {
     Group = 0x11,
     SymtabShndx = 0x12,
     ShtNum = 0x13,
+    // Os(u32),
 }
 
 #[derive(Debug, Clone, ToPrimitive, FromPrimitive)]
