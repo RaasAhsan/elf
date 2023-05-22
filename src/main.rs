@@ -137,7 +137,7 @@ fn main() {
             };
 
             println!(
-                "\t{index:>3}: {:<16} 0x{:08x} {:>6} {:?}",
+                "\t{index:>3}: {:<32} 0x{:08x} {:>6} {:?}",
                 name, st_value, st_size, st_type
             );
         }
