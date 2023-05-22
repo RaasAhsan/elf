@@ -2,7 +2,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{ObjectType, SymbolType, SHT_SYMTAB},
+    elf::{ObjectType, SegmentType, SymbolType, SHT_SYMTAB},
     elf64::{header::Elf64Headers, string_table::StringTable, symbol_table::SymbolTable},
 };
 use num_traits::FromPrimitive;
@@ -77,18 +77,27 @@ fn main() {
 
     if cli.program_headers {
         println!("ELF program headers:");
+        println!(
+            "\t{:<24} {:<16} {:<16} {:<16} {:<16} {:<16}",
+            "Type", "Offset", "Start", "Mem Size", "File Size", "Flags"
+        );
 
         for h in elf.program_headers.iter() {
             let p_type = h.p_type;
-            let elf_p_type = ObjectType::from_u32(p_type);
+            let elf_p_type = SegmentType::from_u32(p_type);
             let p_vaddr = h.p_vaddr;
             let p_memsz = h.p_memsz;
             let p_offset = h.p_offset;
             let p_filesz = h.p_filesz;
             let p_flags = h.p_flags;
             println!(
-                "\tType: {elf_p_type:?} (0x{:08x}), Offset: 0x{:08x}, Start: 0x{:08x}, Mem Size: 0x{:08x}, File Size: 0x{:08x}, Flags: {:b}",
-                p_type, p_offset, p_vaddr, p_memsz, p_filesz, p_flags
+                "\t{:<24} 0x{:014x} 0x{:014x} 0x{:014x} 0x{:014x} {:b}",
+                format!("{elf_p_type:?} (0x{p_type:02x})"),
+                p_offset,
+                p_vaddr,
+                p_memsz,
+                p_filesz,
+                p_flags
             );
         }
 
