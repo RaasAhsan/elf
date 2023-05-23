@@ -1,3 +1,5 @@
+use crate::elf::{SHT_DYNSYM, SHT_SYMTAB};
+
 use super::{header::Elf64SectionHeader, Error};
 
 #[derive(Debug, Clone)]
@@ -7,7 +9,7 @@ pub struct SymbolTable<'a> {
 
 impl<'a> SymbolTable<'a> {
     pub fn parse(buf: &'a [u8], hdr: &Elf64SectionHeader) -> Result<SymbolTable<'a>, Error> {
-        if hdr.sh_type != 0x02 {
+        if hdr.sh_type != SHT_SYMTAB && hdr.sh_type != SHT_DYNSYM {
             return Err(Error::Message("section not a symbol table".to_string()));
         }
 

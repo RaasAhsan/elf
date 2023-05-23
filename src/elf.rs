@@ -13,6 +13,7 @@ pub const SHT_PROGBITS: u32 = 0x01;
 pub const SHT_SYMTAB: u32 = 0x02;
 pub const SHT_STRTAB: u32 = 0x03;
 pub const SHT_RELA: u32 = 0x04;
+pub const SHT_DYNSYM: u32 = 0x0B;
 
 #[derive(Debug, Clone, ToPrimitive, FromPrimitive)]
 pub enum ObjectType {

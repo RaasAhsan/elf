@@ -2,7 +2,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{ObjectType, SegmentType, SymbolType, SHT_SYMTAB},
+    elf::{ObjectType, SegmentType, SymbolType, SHT_DYNSYM, SHT_SYMTAB},
     elf64::{header::Elf64Headers, string_table::StringTable, symbol_table::SymbolTable},
 };
 use num_traits::FromPrimitive;
@@ -24,6 +24,12 @@ struct Cli {
 
     #[arg(long)]
     symbols: bool,
+
+    #[arg(long)]
+    dyn_syms: bool,
+
+    #[arg(long)]
+    relocations: bool,
 
     /// Path to the ELF file
     file: PathBuf,
@@ -58,7 +64,10 @@ fn main() {
 
     if cli.section_headers {
         println!("ELF section headers:");
-        println!("\t{:<24} {:<16} {:<16}", "Name", "Type", "Size");
+        println!(
+            "\t{:<24} {:<16} {:<16} {:<16}",
+            "Name", "Type", "Offset", "Size"
+        );
 
         for s in elf.section_headers.iter() {
             // TODO: ideally use a path dependent type here
@@ -68,8 +77,9 @@ fn main() {
                 .to_str()
                 .unwrap();
             let sh_type = s.sh_type;
+            let sh_offset = s.sh_offset;
             let sh_size = s.sh_size;
-            println!("\t{name:<24} {sh_type:016x} {sh_size:016x}");
+            println!("\t{name:<24} {sh_type:016x} {sh_offset:016x} {sh_size:016x}");
         }
 
         println!();
@@ -141,10 +151,48 @@ fn main() {
                 name, st_value, st_size, st_type
             );
         }
+
+        println!();
     }
 
-    let text_headers = elf.get_section_header_by_name(".text").unwrap();
-    let data = text_headers.get_section_buffer(&buf[..]).unwrap();
-    // println!("{:?}", data);
-    // println!("{:?}", elf.sh_names.get_all_strings());
+    if cli.dyn_syms {
+        let sh = elf.find_section_header(SHT_DYNSYM).unwrap();
+        let name = elf
+            .sh_names
+            .get_string(sh.sh_name as usize)
+            .to_str()
+            .unwrap();
+
+        println!("Dynamic linking symbol table ({name}):");
+
+        let symtab = SymbolTable::parse(&buf, sh).unwrap();
+
+        // the sh_link attribute for a symtab section designates the string table for symbol names
+        let symstr_hdr = elf
+            .get_section_header_by_index(sh.sh_link as usize)
+            .unwrap();
+        let strtab = StringTable::parse(&buf, symstr_hdr).unwrap();
+
+        for (index, sym) in symtab.iter().enumerate() {
+            let st_name = sym.st_name;
+            let st_value = sym.st_value;
+            let st_size = sym.st_size;
+            let st_info = sym.st_info;
+
+            let st_type = SymbolType::from_u8(st_info & 0xf).unwrap();
+
+            let name = if st_name == 0 {
+                ""
+            } else {
+                strtab.get_string(st_name as usize).to_str().unwrap()
+            };
+
+            println!(
+                "\t{index:>3}: {:<32} 0x{:08x} {:>6} {:?}",
+                name, st_value, st_size, st_type
+            );
+        }
+
+        println!();
+    }
 }
