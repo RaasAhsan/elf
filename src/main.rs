@@ -132,7 +132,7 @@ fn main() {
 
         println!("Symbol table ({name}):");
 
-        let symtab = SymbolTable::parse(&buf, sh).unwrap();
+        let symtab = SymbolTable::parse(&buf, &elf, sh).unwrap();
 
         // the sh_link attribute for a symtab section designates the string table for symbol names
         let symstr_hdr = elf
@@ -173,7 +173,7 @@ fn main() {
 
         println!("Dynamic linking symbol table ({name}):");
 
-        let symtab = SymbolTable::parse(&buf, sh).unwrap();
+        let symtab = SymbolTable::parse(&buf, &elf, sh).unwrap();
 
         // the sh_link attribute for a symtab section designates the string table for symbol names
         let symstr_hdr = elf
@@ -219,13 +219,9 @@ fn main() {
                 let sym_hdr = elf
                     .get_section_header_by_index(hdr.sh_link as usize)
                     .unwrap();
-                let str_hdr = elf
-                    .get_section_header_by_index(sym_hdr.sh_link as usize)
-                    .unwrap();
 
                 let reloc_table = RelocationTable::<Rela>::parse(&buf, hdr).unwrap();
-                let sym_table = SymbolTable::parse(&buf, sym_hdr).unwrap();
-                let strtab = StringTable::parse(&buf, str_hdr).unwrap();
+                let sym_table = SymbolTable::parse(&buf, &elf, sym_hdr).unwrap();
 
                 println!("Relocation section ({name} @ 0x{:06x}):", sh_offset);
                 println!(
@@ -237,9 +233,11 @@ fn main() {
                     let offset = reloc.r_offset;
                     let info = reloc.r_info;
                     let addend = reloc.r_addend;
-                    let sym_name_idx = sym_table.get_symbol((info >> 32) as usize).st_name; // TODO: factor this out
-                    let sym_name = strtab.get_string(sym_name_idx as usize).to_str().unwrap();
-                    println!("\t{offset:016x} {info:016x} {addend:016x} {sym_name:<32}");
+                    let symbol = sym_table.get_elf_symbol((info >> 32) as usize); // TODO: factor this out
+                    println!(
+                        "\t{offset:016x} {info:016x} {addend:016x} {sym_name:<32}",
+                        sym_name = symbol.name
+                    );
                 }
 
                 println!()
