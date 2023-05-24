@@ -1,18 +1,16 @@
-use std::collections::HashMap;
-
 use crate::elf::{ELF_CLASS_64, ELF_DATA_LITTLE, ELF_MAGIC};
 
 use super::{string_table::StringTable, Error};
 
 /// A raw representation of the headers in an ELF file.
 /// This includes the ELF headers, the program headers, and
-/// the section headers.
+/// the section headers. This contains pointers to various
+/// sections in the ELF file.
 pub struct Headers<'a> {
     pub header: &'a FileHeaders,
     pub program_headers: &'a [ProgramHeader],
     pub section_headers: &'a [SectionHeader],
     pub sh_names: StringTable<'a>,
-    pub sh_by_name: HashMap<String, &'a SectionHeader>,
 }
 
 /// We must assume a byte-for-byte representation because ELF files can be deployed
@@ -40,23 +38,12 @@ impl<'a> Headers<'a> {
         let sh_names_header = &section_headers[header.e_shstrndx as usize];
         let sh_names = StringTable::parse(buf, sh_names_header)?;
 
-        let mut sections_by_name = HashMap::new();
-        for s in section_headers.iter() {
-            let name = sh_names.get_string(s.sh_name as usize);
-            sections_by_name.insert(name.to_str().unwrap().to_string(), s);
-        }
-
         Ok(Self {
             header,
             program_headers,
             section_headers,
             sh_names,
-            sh_by_name: sections_by_name,
         })
-    }
-
-    pub fn get_section_header_by_name(&self, name: &str) -> Option<&SectionHeader> {
-        self.sh_by_name.get(name).copied()
     }
 
     pub fn get_section_header_by_index(&self, index: usize) -> Option<&SectionHeader> {
