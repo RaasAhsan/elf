@@ -180,7 +180,7 @@ fn main() {
 
             println!(
                 "\t{index:>3}: {:<32} 0x{:08x} {:>6} {:?}",
-                name, sym.value, sym.size, st_type
+                sym.name, sym.value, sym.size, st_type
             );
         }
 
