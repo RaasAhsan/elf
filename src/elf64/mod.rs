@@ -1,4 +1,5 @@
 pub mod header;
+pub mod relocation_table;
 pub mod string_table;
 pub mod symbol_table;
 

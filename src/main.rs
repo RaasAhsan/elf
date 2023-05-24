@@ -2,8 +2,13 @@ use std::{fs::File, io::Read, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{ObjectType, SegmentType, SymbolType, SHT_DYNSYM, SHT_SYMTAB},
-    elf64::{header::Elf64Headers, string_table::StringTable, symbol_table::SymbolTable},
+    elf::{SegmentType, SymbolType, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
+    elf64::{
+        header::Elf64Headers,
+        relocation_table::{Rela, RelocationTable},
+        string_table::StringTable,
+        symbol_table::SymbolTable,
+    },
 };
 use num_traits::FromPrimitive;
 
@@ -22,13 +27,16 @@ struct Cli {
     #[arg(short, long)]
     section_headers: bool,
 
+    /// Display the symbol table
     #[arg(long)]
     symbols: bool,
 
+    /// Display the dynamic linking symbol table
     #[arg(long)]
     dyn_syms: bool,
 
-    #[arg(long)]
+    /// Display the relocations
+    #[arg(long, short)]
     relocations: bool,
 
     /// Path to the ELF file
@@ -194,5 +202,48 @@ fn main() {
         }
 
         println!();
+    }
+
+    if cli.relocations {
+        for hdr in elf.section_headers.iter() {
+            let sh_type = hdr.sh_type;
+            if sh_type == SHT_RELA {
+                let name = elf
+                    .sh_names
+                    .get_string(hdr.sh_name as usize)
+                    .to_str()
+                    .unwrap();
+                let sh_offset = hdr.sh_offset;
+
+                // the sh_link attribute for a symtab section designates the string table for symbol names
+                let sym_hdr = elf
+                    .get_section_header_by_index(hdr.sh_link as usize)
+                    .unwrap();
+                let str_hdr = elf
+                    .get_section_header_by_index(sym_hdr.sh_link as usize)
+                    .unwrap();
+
+                let reloc_table = RelocationTable::<Rela>::parse(&buf, hdr).unwrap();
+                let sym_table = SymbolTable::parse(&buf, sym_hdr).unwrap();
+                let strtab = StringTable::parse(&buf, str_hdr).unwrap();
+
+                println!("Relocation section ({name} @ 0x{:06x}):", sh_offset);
+                println!(
+                    "\t{:<16} {:<16} {:<16} {:<32}",
+                    "Offset", "Info", "Addend", "Symbol Name"
+                );
+
+                for reloc in reloc_table.iter() {
+                    let offset = reloc.r_offset;
+                    let info = reloc.r_info;
+                    let addend = reloc.r_addend;
+                    let sym_name_idx = sym_table.get_symbol((info >> 32) as usize).st_name; // TODO: factor this out
+                    let sym_name = strtab.get_string(sym_name_idx as usize).to_str().unwrap();
+                    println!("\t{offset:016x} {info:016x} {addend:016x} {sym_name:<32}");
+                }
+
+                println!()
+            }
+        }
     }
 }

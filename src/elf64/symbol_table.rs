@@ -38,6 +38,8 @@ impl<'a> SymbolTable<'a> {
     }
 }
 
+static_assertions::const_assert!(std::mem::size_of::<Symbol>() == 24);
+
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Symbol {
