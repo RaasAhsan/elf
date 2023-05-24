@@ -77,8 +77,8 @@ fn main() {
     if cli.section_headers {
         println!("ELF section headers:");
         println!(
-            "\t{:<24} {:<16} {:<16} {:<16}",
-            "Name", "Type", "Offset", "Size"
+            "\t{:<24} {:<16} {:<16} {:<16} {:<16}",
+            "Name", "Type", "Offset", "Address", "Size"
         );
 
         for s in elf.section_headers.iter() {
@@ -91,7 +91,8 @@ fn main() {
             let sh_type = s.sh_type;
             let sh_offset = s.sh_offset;
             let sh_size = s.sh_size;
-            println!("\t{name:<24} {sh_type:016x} {sh_offset:016x} {sh_size:016x}");
+            let sh_addr = s.sh_addr;
+            println!("\t{name:<24} {sh_type:016x} {sh_offset:016x} {sh_addr:016x} {sh_size:016x}");
         }
 
         println!();
