@@ -1,6 +1,6 @@
 use crate::elf::SHT_RELA;
 
-use super::{header::Elf64SectionHeader, Error};
+use super::{header::SectionHeader, Error};
 
 // TODO: we can probably write a generic table for a fixed type, or write a macro
 
@@ -12,7 +12,7 @@ pub struct RelocationTable<'a, R: Relocation> {
 impl<'a, R: Relocation> RelocationTable<'a, R> {
     pub fn parse<A: AsRef<[u8]>>(
         buf: &'a A,
-        hdr: &Elf64SectionHeader,
+        hdr: &SectionHeader,
     ) -> Result<RelocationTable<'a, R>, Error> {
         if hdr.sh_type != SHT_RELA {
             return Err(Error::Message("section not a relocation table".to_string()));

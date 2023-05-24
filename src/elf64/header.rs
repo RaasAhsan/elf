@@ -7,19 +7,19 @@ use super::{string_table::StringTable, Error};
 /// A raw representation of the headers in an ELF file.
 /// This includes the ELF headers, the program headers, and
 /// the section headers.
-pub struct Elf64Headers<'a> {
-    pub header: &'a Elf64FileHeader,
-    pub program_headers: &'a [Elf64ProgramHeader],
-    pub section_headers: &'a [Elf64SectionHeader],
+pub struct Headers<'a> {
+    pub header: &'a FileHeaders,
+    pub program_headers: &'a [ProgramHeader],
+    pub section_headers: &'a [SectionHeader],
     pub sh_names: StringTable<'a>,
-    pub sh_by_name: HashMap<String, &'a Elf64SectionHeader>,
+    pub sh_by_name: HashMap<String, &'a SectionHeader>,
 }
 
 /// We must assume a byte-for-byte representation because ELF files can be deployed
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
-impl<'a> Elf64Headers<'a> {
-    pub fn parse<A: AsRef<[u8]>>(buf: &'a A) -> Result<Elf64Headers<'a>, Error> {
-        let header = Elf64FileHeader::parse(buf)?;
+impl<'a> Headers<'a> {
+    pub fn parse<A: AsRef<[u8]>>(buf: &'a A) -> Result<Headers<'a>, Error> {
+        let header = FileHeaders::parse(buf)?;
 
         if header.e_ident.magic != ELF_MAGIC {
             return Err(Error::InvalidMagicNumber);
@@ -33,9 +33,8 @@ impl<'a> Elf64Headers<'a> {
             return Err(Error::InvalidEndianness);
         }
 
-        let program_headers = Elf64ProgramHeader::parse_headers(buf, header)?;
-        let section_headers: &[Elf64SectionHeader] =
-            Elf64SectionHeader::parse_headers(buf, header)?;
+        let program_headers = ProgramHeader::parse_headers(buf, header)?;
+        let section_headers: &[SectionHeader] = SectionHeader::parse_headers(buf, header)?;
 
         // TODO: validate
         let sh_names_header = &section_headers[header.e_shstrndx as usize];
@@ -56,11 +55,11 @@ impl<'a> Elf64Headers<'a> {
         })
     }
 
-    pub fn get_section_header_by_name(&self, name: &str) -> Option<&Elf64SectionHeader> {
+    pub fn get_section_header_by_name(&self, name: &str) -> Option<&SectionHeader> {
         self.sh_by_name.get(name).copied()
     }
 
-    pub fn get_section_header_by_index(&self, index: usize) -> Option<&Elf64SectionHeader> {
+    pub fn get_section_header_by_index(&self, index: usize) -> Option<&SectionHeader> {
         if index >= self.section_headers.len() {
             return None;
         }
@@ -68,22 +67,22 @@ impl<'a> Elf64Headers<'a> {
         Some(&self.section_headers[index])
     }
 
-    pub fn find_section_header(&self, sh_type: u32) -> Option<&Elf64SectionHeader> {
+    pub fn find_section_header(&self, sh_type: u32) -> Option<&SectionHeader> {
         self.section_headers
             .iter()
             .find(|&hdr| hdr.sh_type == sh_type)
     }
 }
 
-static_assertions::const_assert!(std::mem::size_of::<Elf64FileHeader>() == 64);
-static_assertions::const_assert!(std::mem::size_of::<Elf64Ident>() == 16);
-static_assertions::const_assert!(std::mem::size_of::<Elf64ProgramHeader>() == 0x38);
-static_assertions::const_assert!(std::mem::size_of::<Elf64SectionHeader>() == 0x40);
+static_assertions::const_assert!(std::mem::size_of::<FileHeaders>() == 64);
+static_assertions::const_assert!(std::mem::size_of::<Ident>() == 16);
+static_assertions::const_assert!(std::mem::size_of::<ProgramHeader>() == 0x38);
+static_assertions::const_assert!(std::mem::size_of::<SectionHeader>() == 0x40);
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
-pub struct Elf64FileHeader {
-    pub e_ident: Elf64Ident,
+pub struct FileHeaders {
+    pub e_ident: Ident,
     pub e_type: u16,
     pub e_machine: u16,
     pub e_version: u32,
@@ -99,22 +98,22 @@ pub struct Elf64FileHeader {
     pub e_shstrndx: u16,
 }
 
-impl Elf64FileHeader {
-    pub fn parse<'a, A: AsRef<[u8]>>(buf: &'a A) -> Result<&'a Elf64FileHeader, Error> {
+impl FileHeaders {
+    pub fn parse<'a, A: AsRef<[u8]>>(buf: &'a A) -> Result<&'a FileHeaders, Error> {
         let buf = buf.as_ref();
-        if buf.len() < std::mem::size_of::<Elf64FileHeader>() {
+        if buf.len() < std::mem::size_of::<FileHeaders>() {
             return Err(Error::Message("invalid header length".to_string()));
         }
 
-        let ptr = buf.as_ptr() as *const Elf64FileHeader;
-        let header: &'a Elf64FileHeader = unsafe { &*ptr };
+        let ptr = buf.as_ptr() as *const FileHeaders;
+        let header: &'a FileHeaders = unsafe { &*ptr };
         Ok(header)
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
-pub struct Elf64Ident {
+pub struct Ident {
     pub magic: [u8; 4],
     pub class: u8,
     pub data: u8,
@@ -126,7 +125,7 @@ pub struct Elf64Ident {
 
 #[derive(Debug, Clone)]
 #[repr(C, packed)]
-pub struct Elf64ProgramHeader {
+pub struct ProgramHeader {
     pub p_type: u32,
     pub p_flags: u32,
     pub p_offset: u64,
@@ -137,11 +136,11 @@ pub struct Elf64ProgramHeader {
     pub p_align: u64,
 }
 
-impl Elf64ProgramHeader {
+impl ProgramHeader {
     pub fn parse_headers<'a, A: AsRef<[u8]>>(
         buf: &'a A,
-        header: &Elf64FileHeader,
-    ) -> Result<&'a [Elf64ProgramHeader], Error> {
+        header: &FileHeaders,
+    ) -> Result<&'a [ProgramHeader], Error> {
         let offset = header.e_phoff as usize;
         let length = (header.e_phentsize as usize) * (header.e_phnum as usize);
 
@@ -150,8 +149,8 @@ impl Elf64ProgramHeader {
             return Err(Error::Message("invalid program headers length".to_string()));
         }
 
-        let ptr = phbuf.as_ptr() as *const Elf64ProgramHeader;
-        let pheader: &'a [Elf64ProgramHeader] =
+        let ptr = phbuf.as_ptr() as *const ProgramHeader;
+        let pheader: &'a [ProgramHeader] =
             unsafe { std::slice::from_raw_parts(ptr, header.e_phnum as usize) };
         Ok(pheader)
     }
@@ -159,7 +158,7 @@ impl Elf64ProgramHeader {
 
 #[derive(Debug, Clone)]
 #[repr(C, packed)]
-pub struct Elf64SectionHeader {
+pub struct SectionHeader {
     pub sh_name: u32,
     pub sh_type: u32,
     pub sh_flags: u64,
@@ -172,11 +171,11 @@ pub struct Elf64SectionHeader {
     pub sh_entsize: u64,
 }
 
-impl Elf64SectionHeader {
+impl SectionHeader {
     pub fn parse_headers<'a, A: AsRef<[u8]>>(
         buf: &'a A,
-        header: &Elf64FileHeader,
-    ) -> Result<&'a [Elf64SectionHeader], Error> {
+        header: &FileHeaders,
+    ) -> Result<&'a [SectionHeader], Error> {
         let offset = header.e_shoff as usize;
         let length = (header.e_shentsize as usize) * (header.e_shnum as usize);
 
@@ -185,8 +184,8 @@ impl Elf64SectionHeader {
             return Err(Error::Message("invalid section headers length".to_string()));
         }
 
-        let ptr = shbuf.as_ptr() as *const Elf64SectionHeader;
-        let pheader: &'a [Elf64SectionHeader] =
+        let ptr = shbuf.as_ptr() as *const SectionHeader;
+        let pheader: &'a [SectionHeader] =
             unsafe { std::slice::from_raw_parts(ptr, header.e_shnum as usize) };
         Ok(pheader)
     }

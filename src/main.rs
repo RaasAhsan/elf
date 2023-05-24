@@ -4,7 +4,7 @@ use clap::Parser;
 use elf::{
     elf::{SegmentType, SymbolType, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
     elf64::{
-        header::Elf64Headers,
+        header::Headers,
         relocation_table::{Rela, RelocationTable},
         string_table::StringTable,
         symbol_table::SymbolTable,
@@ -54,7 +54,7 @@ fn main() {
     // let mut buf = vec![];
     // file.read_to_end(&mut buf).unwrap();
 
-    let elf = Elf64Headers::parse(&mmap).unwrap();
+    let elf = Headers::parse(&mmap).unwrap();
     // println!("{:?}", elf);
 
     if cli.file_header {

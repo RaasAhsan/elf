@@ -1,6 +1,6 @@
 use std::ffi::{c_char, CStr};
 
-use super::{header::Elf64SectionHeader, Error};
+use super::{header::SectionHeader, Error};
 
 #[derive(Debug, Clone)]
 pub struct StringTable<'a> {
@@ -10,7 +10,7 @@ pub struct StringTable<'a> {
 impl<'a> StringTable<'a> {
     pub fn parse<A: AsRef<[u8]>>(
         buf: &'a A,
-        hdr: &Elf64SectionHeader,
+        hdr: &SectionHeader,
     ) -> Result<StringTable<'a>, Error> {
         if hdr.sh_type != 0x03 {
             return Err(Error::Message("section not a string table".to_string()));
