@@ -10,7 +10,10 @@ pub struct RelocationTable<'a, R: Relocation> {
 }
 
 impl<'a, R: Relocation> RelocationTable<'a, R> {
-    pub fn parse(buf: &'a [u8], hdr: &Elf64SectionHeader) -> Result<RelocationTable<'a, R>, Error> {
+    pub fn parse<A: AsRef<[u8]>>(
+        buf: &'a A,
+        hdr: &Elf64SectionHeader,
+    ) -> Result<RelocationTable<'a, R>, Error> {
         if hdr.sh_type != SHT_RELA {
             return Err(Error::Message("section not a relocation table".to_string()));
         }

@@ -18,8 +18,8 @@ pub struct Elf64Headers<'a> {
 /// We must assume a byte-for-byte representation because ELF files can be deployed
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
 impl<'a> Elf64Headers<'a> {
-    pub fn parse(buf: &'a [u8]) -> Result<Elf64Headers<'a>, Error> {
-        let header = Elf64FileHeader::from_buffer(buf)?;
+    pub fn parse<A: AsRef<[u8]>>(buf: &'a A) -> Result<Elf64Headers<'a>, Error> {
+        let header = Elf64FileHeader::parse(buf)?;
 
         if header.e_ident.magic != ELF_MAGIC {
             return Err(Error::InvalidMagicNumber);
@@ -100,7 +100,8 @@ pub struct Elf64FileHeader {
 }
 
 impl Elf64FileHeader {
-    pub fn from_buffer<'a>(buf: &'a [u8]) -> Result<&'a Elf64FileHeader, Error> {
+    pub fn parse<'a, A: AsRef<[u8]>>(buf: &'a A) -> Result<&'a Elf64FileHeader, Error> {
+        let buf = buf.as_ref();
         if buf.len() < std::mem::size_of::<Elf64FileHeader>() {
             return Err(Error::Message("invalid header length".to_string()));
         }
@@ -137,14 +138,14 @@ pub struct Elf64ProgramHeader {
 }
 
 impl Elf64ProgramHeader {
-    pub fn parse_headers<'a>(
-        buf: &'a [u8],
+    pub fn parse_headers<'a, A: AsRef<[u8]>>(
+        buf: &'a A,
         header: &Elf64FileHeader,
     ) -> Result<&'a [Elf64ProgramHeader], Error> {
         let offset = header.e_phoff as usize;
         let length = (header.e_phentsize as usize) * (header.e_phnum as usize);
 
-        let phbuf = &buf[offset..(offset + length)];
+        let phbuf = &buf.as_ref()[offset..(offset + length)];
         if phbuf.len() < length {
             return Err(Error::Message("invalid program headers length".to_string()));
         }
@@ -172,14 +173,14 @@ pub struct Elf64SectionHeader {
 }
 
 impl Elf64SectionHeader {
-    pub fn parse_headers<'a>(
-        buf: &'a [u8],
+    pub fn parse_headers<'a, A: AsRef<[u8]>>(
+        buf: &'a A,
         header: &Elf64FileHeader,
     ) -> Result<&'a [Elf64SectionHeader], Error> {
         let offset = header.e_shoff as usize;
         let length = (header.e_shentsize as usize) * (header.e_shnum as usize);
 
-        let shbuf = &buf[offset..(offset + length)];
+        let shbuf = &buf.as_ref()[offset..(offset + length)];
         if shbuf.len() < length {
             return Err(Error::Message("invalid section headers length".to_string()));
         }
@@ -190,11 +191,11 @@ impl Elf64SectionHeader {
         Ok(pheader)
     }
 
-    pub fn get_section_buffer<'a>(&self, buf: &'a [u8]) -> Result<&'a [u8], Error> {
+    pub fn get_section_buffer<'a, A: AsRef<[u8]>>(&self, buf: &'a A) -> Result<&'a [u8], Error> {
         let offset = self.sh_offset as usize;
         let size = self.sh_size as usize;
 
-        let buf = &buf[offset..(offset + size)];
+        let buf = &buf.as_ref()[offset..(offset + size)];
         if buf.len() < size {
             return Err(Error::Message(
                 "invalid section offset and size".to_string(),

@@ -8,7 +8,10 @@ pub struct StringTable<'a> {
 }
 
 impl<'a> StringTable<'a> {
-    pub fn parse(buf: &'a [u8], hdr: &Elf64SectionHeader) -> Result<StringTable<'a>, Error> {
+    pub fn parse<A: AsRef<[u8]>>(
+        buf: &'a A,
+        hdr: &Elf64SectionHeader,
+    ) -> Result<StringTable<'a>, Error> {
         if hdr.sh_type != 0x03 {
             return Err(Error::Message("section not a string table".to_string()));
         }

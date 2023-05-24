@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, path::PathBuf};
 
 use clap::Parser;
 use elf::{
@@ -10,6 +10,7 @@ use elf::{
         symbol_table::SymbolTable,
     },
 };
+use memmap2::Mmap;
 use num_traits::FromPrimitive;
 
 #[derive(Parser, Debug)]
@@ -46,11 +47,14 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
-    let mut file = File::open(cli.file).unwrap();
-    let mut buf = vec![];
-    file.read_to_end(&mut buf).unwrap();
+    let file = File::open(cli.file).unwrap();
 
-    let elf = Elf64Headers::parse(&buf[..]).unwrap();
+    let mmap = unsafe { Mmap::map(&file).unwrap() };
+
+    // let mut buf = vec![];
+    // file.read_to_end(&mut buf).unwrap();
+
+    let elf = Elf64Headers::parse(&mmap).unwrap();
     // println!("{:?}", elf);
 
     if cli.file_header {
@@ -132,13 +136,13 @@ fn main() {
 
         println!("Symbol table ({name}):");
 
-        let symtab = SymbolTable::parse(&buf, &elf, sh).unwrap();
+        let symtab = SymbolTable::parse(&mmap, &elf, sh).unwrap();
 
         // the sh_link attribute for a symtab section designates the string table for symbol names
         let symstr_hdr = elf
             .get_section_header_by_index(sh.sh_link as usize)
             .unwrap();
-        let strtab = StringTable::parse(&buf, symstr_hdr).unwrap();
+        let strtab = StringTable::parse(&mmap, symstr_hdr).unwrap();
 
         for (index, sym) in symtab.iter().enumerate() {
             let st_name = sym.st_name;
@@ -173,7 +177,7 @@ fn main() {
 
         println!("Dynamic linking symbol table ({name}):");
 
-        let symtab = SymbolTable::parse(&buf, &elf, sh).unwrap();
+        let symtab = SymbolTable::parse(&mmap, &elf, sh).unwrap();
 
         for (index, sym) in symtab.symbols_iter().enumerate() {
             let st_type = SymbolType::from_u8(sym.info & 0xf).unwrap();
@@ -203,8 +207,8 @@ fn main() {
                     .get_section_header_by_index(hdr.sh_link as usize)
                     .unwrap();
 
-                let reloc_table = RelocationTable::<Rela>::parse(&buf, hdr).unwrap();
-                let sym_table = SymbolTable::parse(&buf, &elf, sym_hdr).unwrap();
+                let reloc_table = RelocationTable::<Rela>::parse(&mmap, hdr).unwrap();
+                let sym_table = SymbolTable::parse(&mmap, &elf, sym_hdr).unwrap();
 
                 println!("Relocation section ({name} @ 0x{:06x}):", sh_offset);
                 println!(

@@ -13,8 +13,8 @@ pub struct SymbolTable<'a> {
 }
 
 impl<'a> SymbolTable<'a> {
-    pub fn parse(
-        buf: &'a [u8],
+    pub fn parse<A: AsRef<[u8]>>(
+        buf: &'a A,
         elf: &Elf64Headers,
         hdr: &Elf64SectionHeader,
     ) -> Result<SymbolTable<'a>, Error> {

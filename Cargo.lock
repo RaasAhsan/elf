@@ -122,6 +122,7 @@ name = "elf"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "memmap2",
  "num-derive",
  "num-traits",
  "static_assertions",
@@ -195,6 +196,15 @@ name = "linux-raw-sys"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ece97ea872ece730aed82664c424eb4c8291e1ff2480247ccf7409044bc6479f"
+
+[[package]]
+name = "memmap2"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0aa1b505aeecb0adb017db2b6a79a17a38e64f882a201f05e9de8a982cd6096"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "num-derive"
