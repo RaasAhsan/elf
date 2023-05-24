@@ -175,29 +175,12 @@ fn main() {
 
         let symtab = SymbolTable::parse(&buf, &elf, sh).unwrap();
 
-        // the sh_link attribute for a symtab section designates the string table for symbol names
-        let symstr_hdr = elf
-            .get_section_header_by_index(sh.sh_link as usize)
-            .unwrap();
-        let strtab = StringTable::parse(&buf, symstr_hdr).unwrap();
-
-        for (index, sym) in symtab.iter().enumerate() {
-            let st_name = sym.st_name;
-            let st_value = sym.st_value;
-            let st_size = sym.st_size;
-            let st_info = sym.st_info;
-
-            let st_type = SymbolType::from_u8(st_info & 0xf).unwrap();
-
-            let name = if st_name == 0 {
-                ""
-            } else {
-                strtab.get_string(st_name as usize).to_str().unwrap()
-            };
+        for (index, sym) in symtab.symbols_iter().enumerate() {
+            let st_type = SymbolType::from_u8(sym.info & 0xf).unwrap();
 
             println!(
                 "\t{index:>3}: {:<32} 0x{:08x} {:>6} {:?}",
-                name, st_value, st_size, st_type
+                name, sym.value, sym.size, st_type
             );
         }
 

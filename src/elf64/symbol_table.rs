@@ -50,18 +50,20 @@ impl<'a> SymbolTable<'a> {
     }
 
     pub fn get_elf_symbol(&'a self, index: usize) -> ElfSymbol<'a> {
-        if index >= self.symbols.len() {
-            panic!("invalid symbol index");
-        }
+        self.convert_symbol(self.get_symbol(index))
+    }
 
-        let symbol = &self.symbols[index];
-
+    fn convert_symbol(&'a self, symbol: &Symbol) -> ElfSymbol<'a> {
         let name_index = symbol.st_name;
-        let name = self
-            .string_table
-            .get_string(name_index as usize)
-            .to_str()
-            .unwrap();
+
+        let name = if name_index == 0 {
+            ""
+        } else {
+            self.string_table
+                .get_string(name_index as usize)
+                .to_str()
+                .unwrap()
+        };
         let info = symbol.st_info;
         let other = symbol.st_other;
         let shndx = symbol.st_shndx;
@@ -80,6 +82,10 @@ impl<'a> SymbolTable<'a> {
 
     pub fn iter(&'a self) -> impl Iterator<Item = &'a Symbol> {
         self.symbols.iter()
+    }
+
+    pub fn symbols_iter(&'a self) -> impl Iterator<Item = ElfSymbol<'a>> {
+        self.symbols.iter().map(|sym| self.convert_symbol(sym))
     }
 }
 
