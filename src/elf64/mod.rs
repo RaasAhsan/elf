@@ -1,3 +1,4 @@
+pub mod dynamic;
 pub mod header;
 pub mod relocation_table;
 pub mod string_table;

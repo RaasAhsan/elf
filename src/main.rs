@@ -2,8 +2,9 @@ use std::{fs::File, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{SegmentType, SymbolType, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
+    elf::{SegmentType, SymbolType, SHT_DYNAMIC, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
     elf64::{
+        dynamic::DynamicTable,
         header::Headers,
         relocation_table::{Rela, RelocationTable},
         string_table::StringTable,
@@ -39,6 +40,10 @@ struct Cli {
     /// Display the relocations
     #[arg(long, short)]
     relocations: bool,
+
+    /// Display dynamic linking information
+    #[arg(long, short)]
+    dynamic: bool,
 
     /// Path to the ELF file
     file: PathBuf,
@@ -231,5 +236,28 @@ fn main() {
                 println!()
             }
         }
+    }
+
+    if cli.dynamic {
+        let sh = elf.find_section_header(SHT_DYNAMIC).unwrap();
+        let name = elf
+            .sh_names
+            .get_string(sh.sh_name as usize)
+            .to_str()
+            .unwrap();
+
+        println!("Dynamic linking information ({name}):");
+        println!("\t{:<16} {:<16}", "Tag", "Value");
+
+        let symtab = DynamicTable::parse(&mmap, sh).unwrap();
+
+        for (_, dynamic) in symtab.iter().enumerate() {
+            let tag = dynamic.d_tag;
+            let value = dynamic.d_value;
+
+            println!("\t{:016x} {:016x}", tag, value);
+        }
+
+        println!();
     }
 }
