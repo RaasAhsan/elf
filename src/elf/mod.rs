@@ -1,3 +1,6 @@
+use std::fmt::Display;
+
+use enumflags2::bitflags;
 use num_derive::{FromPrimitive, ToPrimitive};
 
 pub const ELF_MAGIC: [u8; 4] = [0x7f, 0x45, 0x4c, 0x46];
@@ -73,4 +76,23 @@ pub enum SymbolType {
     Hios = 12,
     Loproc = 13,
     Hiproc = 15,
+}
+
+#[bitflags]
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum SegmentFlag {
+    Execute = 0b001,
+    Write = 0b010,
+    Read = 0b100,
+}
+
+impl SegmentFlag {
+    pub fn name(&self) -> &'static str {
+        match self {
+            SegmentFlag::Execute => "E",
+            SegmentFlag::Write => "W",
+            SegmentFlag::Read => "R",
+        }
+    }
 }

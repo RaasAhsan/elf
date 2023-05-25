@@ -2,7 +2,7 @@ use std::{fs::File, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{SegmentType, SymbolType, SHT_DYNAMIC, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
+    elf::{SegmentFlag, SegmentType, SymbolType, SHT_DYNAMIC, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
     elf64::{
         dynamic::DynamicTable,
         header::Headers,
@@ -11,6 +11,7 @@ use elf::{
         symbol_table::SymbolTable,
     },
 };
+use enumflags2::BitFlags;
 use memmap2::Mmap;
 use num_traits::FromPrimitive;
 
@@ -118,14 +119,16 @@ fn main() {
             let p_offset = h.p_offset;
             let p_filesz = h.p_filesz;
             let p_flags = h.p_flags;
+            let flags = BitFlags::<SegmentFlag>::from_bits((p_flags & 0xff) as u8).unwrap();
+            let flags_vec = flags.iter().collect::<Vec<_>>();
             println!(
-                "\t{:<24} 0x{:014x} 0x{:014x} 0x{:014x} 0x{:014x} {:b}",
+                "\t{:<24} 0x{:014x} 0x{:014x} 0x{:014x} 0x{:014x} {:?}",
                 format!("{elf_p_type:?} (0x{p_type:02x})"),
                 p_offset,
                 p_vaddr,
                 p_memsz,
                 p_filesz,
-                p_flags
+                flags_vec
             );
         }
 
