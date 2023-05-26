@@ -1,31 +1,62 @@
-use std::fmt::Display;
-
 use enumflags2::bitflags;
 use num_derive::{FromPrimitive, ToPrimitive};
 
-pub const ELF_MAGIC: [u8; 4] = [0x7f, 0x45, 0x4c, 0x46];
+#[derive(Debug, Clone)]
+pub enum ObjectClass {
+    Elf32,
+    Elf64,
+}
 
-pub const ELF_CLASS_32: u8 = 0x01;
-pub const ELF_CLASS_64: u8 = 0x02;
+impl ObjectClass {
+    pub fn from_u8(value: u8) -> Option<ObjectClass> {
+        match value {
+            0x01 => Some(ObjectClass::Elf32),
+            0x02 => Some(ObjectClass::Elf64),
+            _ => None,
+        }
+    }
+}
 
-pub const ELF_DATA_LITTLE: u8 = 0x01;
-pub const ELF_DATA_BIG: u8 = 0x02;
+#[derive(Debug, Clone)]
+pub enum ObjectData {
+    Little,
+    Big,
+}
 
-pub const SHT_NULL: u32 = 0x00;
-pub const SHT_PROGBITS: u32 = 0x01;
-pub const SHT_SYMTAB: u32 = 0x02;
-pub const SHT_STRTAB: u32 = 0x03;
-pub const SHT_RELA: u32 = 0x04;
-pub const SHT_DYNAMIC: u32 = 0x06;
-pub const SHT_DYNSYM: u32 = 0x0B;
+impl ObjectData {
+    pub fn from_u8(value: u8) -> Option<ObjectData> {
+        match value {
+            0x01 => Some(ObjectData::Little),
+            0x02 => Some(ObjectData::Big),
+            _ => None,
+        }
+    }
+}
 
-#[derive(Debug, Clone, ToPrimitive, FromPrimitive)]
+#[derive(Debug, Clone)]
 pub enum ObjectType {
-    None = 0x0,
-    Rel = 0x1,
-    Exec = 0x2,
-    Dyn = 0x3,
-    Core = 0x4,
+    None,
+    Rel,
+    Exec,
+    Dyn,
+    Core,
+    Os(u16),
+    Proc(u16),
+}
+
+impl ObjectType {
+    pub fn from_u16(value: u16) -> Option<ObjectType> {
+        match value {
+            0x00 => Some(ObjectType::None),
+            0x01 => Some(ObjectType::Rel),
+            0x02 => Some(ObjectType::Exec),
+            0x03 => Some(ObjectType::Dyn),
+            0x04 => Some(ObjectType::Core),
+            0xFE00..=0xFEFF => Some(ObjectType::Os(value)),
+            0xFF00..=0xFFFF => Some(ObjectType::Proc(value)),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

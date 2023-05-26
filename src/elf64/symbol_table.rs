@@ -1,4 +1,4 @@
-use crate::elf::{SHT_DYNSYM, SHT_SYMTAB};
+use crate::elf64::{SHT_DYNSYM, SHT_SYMTAB};
 
 use super::{
     header::{Headers, SectionHeader},

@@ -1,4 +1,4 @@
-use crate::elf::{ELF_CLASS_64, ELF_DATA_LITTLE, ELF_MAGIC};
+use crate::elf64::{ELF_CLASS_64, ELF_DATA_LITTLE, ELF_MAGIC};
 
 use super::{string_table::StringTable, Error};
 

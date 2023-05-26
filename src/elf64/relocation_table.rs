@@ -1,4 +1,4 @@
-use crate::elf::SHT_RELA;
+use crate::elf64::SHT_RELA;
 
 use super::{header::SectionHeader, Error};
 

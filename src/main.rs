@@ -2,13 +2,14 @@ use std::{fs::File, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{SegmentFlag, SegmentType, SymbolType, SHT_DYNAMIC, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB},
+    elf::{ObjectClass, ObjectData, ObjectType, SegmentFlag, SegmentType, SymbolType},
     elf64::{
         dynamic::DynamicTable,
         header::Headers,
         relocation_table::{Rela, RelocationTable},
         string_table::StringTable,
         symbol_table::SymbolTable,
+        SHT_DYNAMIC, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB,
     },
 };
 use enumflags2::BitFlags;
@@ -65,16 +66,18 @@ fn main() {
 
     if cli.file_header {
         let machine = elf.header.e_machine;
-        let elf_type = elf.header.e_type;
+        let class = ObjectClass::from_u8(elf.header.e_ident.class).unwrap();
+        let elf_type = ObjectType::from_u16(elf.header.e_type).unwrap();
+        let data = ObjectData::from_u8(elf.header.e_ident.data).unwrap();
         let entry = elf.header.e_entry;
         println!(
             "ELF file header: \n\
-            \tClass: {} \n\
+            \tClass: {:?} \n\
             \tMachine: 0x{:02x}\n\
-            \tData: {}\n\
-            \tType: {}\n\
+            \tData: {:?}\n\
+            \tType: {:?}\n\
             \tEntrypoint: 0x{:08x}",
-            elf.header.e_ident.class, machine, elf.header.e_ident.data, elf_type, entry
+            class, machine, data, elf_type, entry
         );
 
         println!();
@@ -144,6 +147,10 @@ fn main() {
             .unwrap();
 
         println!("Symbol table ({name}):");
+        println!(
+            "\t{:<4} {:<32} {:<10} {:<6} {:<16}",
+            "Num", "Name", "Value", "Size", "Type"
+        );
 
         let symtab = SymbolTable::parse(&mmap, &elf, sh).unwrap();
 
