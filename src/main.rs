@@ -19,6 +19,9 @@ use num_traits::FromPrimitive;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    #[arg(short, long)]
+    all: bool,
+
     /// Display the ELF file header
     #[arg(short, long)]
     file_header: bool,
@@ -47,6 +50,10 @@ struct Cli {
     #[arg(long, short)]
     dynamic: bool,
 
+    /// Display section-to-segment mapping
+    #[arg(long)]
+    section_mapping: bool,
+
     /// Path to the ELF file
     file: PathBuf,
 }
@@ -64,7 +71,7 @@ fn main() {
     let elf = Headers::parse(&mmap).unwrap();
     // println!("{:?}", elf);
 
-    if cli.file_header {
+    if cli.file_header || cli.all {
         let machine = elf.header.e_machine;
         let class = ObjectClass::from_u8(elf.header.e_ident.class).unwrap();
         let elf_type = ObjectType::from_u16(elf.header.e_type).unwrap();
@@ -83,7 +90,7 @@ fn main() {
         println!();
     }
 
-    if cli.section_headers {
+    if cli.section_headers || cli.all {
         println!("ELF section headers:");
         println!(
             "\t{:<24} {:<16} {:<16} {:<16} {:<16}",
@@ -107,7 +114,7 @@ fn main() {
         println!();
     }
 
-    if cli.program_headers {
+    if cli.program_headers || cli.all {
         println!("ELF program headers:");
         println!(
             "\t{:<24} {:<16} {:<16} {:<16} {:<16} {:<16}",
@@ -138,7 +145,7 @@ fn main() {
         println!();
     }
 
-    if cli.symbols {
+    if cli.symbols || cli.all {
         let sh = elf.find_section_header(SHT_SYMTAB).unwrap();
         let name = elf
             .sh_names
@@ -183,7 +190,7 @@ fn main() {
         println!();
     }
 
-    if cli.dyn_syms {
+    if cli.dyn_syms || cli.all {
         let sh = elf.find_section_header(SHT_DYNSYM).unwrap();
         let name = elf
             .sh_names
@@ -207,7 +214,7 @@ fn main() {
         println!();
     }
 
-    if cli.relocations {
+    if cli.relocations || cli.all {
         for hdr in elf.section_headers.iter() {
             let sh_type = hdr.sh_type;
             if sh_type == SHT_RELA {
@@ -248,7 +255,7 @@ fn main() {
         }
     }
 
-    if cli.dynamic {
+    if cli.dynamic || cli.all {
         let sh = elf.find_section_header(SHT_DYNAMIC).unwrap();
         let name = elf
             .sh_names
@@ -261,11 +268,39 @@ fn main() {
 
         let symtab = DynamicTable::parse(&mmap, sh).unwrap();
 
-        for (_, dynamic) in symtab.iter().enumerate() {
+        for dynamic in symtab.iter() {
             let tag = dynamic.d_tag;
             let value = dynamic.d_value;
 
             println!("\t{:016x} {:016x}", tag, value);
+        }
+
+        println!();
+    }
+
+    if cli.section_mapping || cli.all {
+        println!("Section-to-segment mapping:");
+        println!("\tSegment Sections");
+
+        for (i, ph) in elf.program_headers.iter().enumerate() {
+            let ph_addr = ph.p_vaddr;
+            let ph_addr_end = ph_addr + ph.p_memsz;
+
+            let mut segments = String::new();
+
+            for sh in elf.section_headers.iter() {
+                let sh_addr = sh.sh_addr;
+
+                if sh_addr >= ph_addr && sh_addr < ph_addr_end {
+                    let name = elf
+                        .sh_names
+                        .get_string(sh.sh_name as usize)
+                        .to_str()
+                        .unwrap();
+                    segments.push_str(&format!("{name} "));
+                }
+            }
+            println!("\t {i:>6}: {segments}");
         }
 
         println!();
