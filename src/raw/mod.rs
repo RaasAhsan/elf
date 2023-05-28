@@ -1,8 +1,8 @@
 pub mod dynamic;
 pub mod header;
-pub mod relocation_table;
-pub mod string_table;
-pub mod symbol_table;
+pub mod relocation;
+pub mod string;
+pub mod symbol;
 
 pub const ELF_MAGIC: [u8; 4] = [0x7f, 0x45, 0x4c, 0x46];
 

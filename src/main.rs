@@ -2,13 +2,13 @@ use std::{fs::File, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    elf::{ObjectClass, ObjectData, ObjectType, SegmentFlag, SegmentType, SymbolType},
-    elf64::{
+    parsed::{ObjectClass, ObjectData, ObjectType, SegmentFlag, SegmentType, SymbolType},
+    raw::{
         dynamic::DynamicTable,
         header::Headers,
-        relocation_table::{Rela, RelocationTable},
-        string_table::StringTable,
-        symbol_table::SymbolTable,
+        relocation::{Rela, RelocationTable},
+        string::StringTable,
+        symbol::SymbolTable,
         SHT_DYNAMIC, SHT_DYNSYM, SHT_RELA, SHT_SYMTAB,
     },
 };

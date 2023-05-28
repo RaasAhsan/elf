@@ -1,4 +1,4 @@
-use crate::elf64::SHT_DYNAMIC;
+use crate::raw::SHT_DYNAMIC;
 
 use super::{header::SectionHeader, Error};
 

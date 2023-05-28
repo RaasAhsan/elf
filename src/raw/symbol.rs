@@ -1,8 +1,8 @@
-use crate::elf64::{SHT_DYNSYM, SHT_SYMTAB};
+use crate::raw::{SHT_DYNSYM, SHT_SYMTAB};
 
 use super::{
     header::{Headers, SectionHeader},
-    string_table::StringTable,
+    string::StringTable,
     Error,
 };
 

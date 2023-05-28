@@ -1,6 +1,6 @@
-use crate::elf64::{ELF_CLASS_64, ELF_DATA_LITTLE, ELF_MAGIC};
+use crate::raw::{ELF_CLASS_64, ELF_DATA_LITTLE, ELF_MAGIC};
 
-use super::{string_table::StringTable, Error};
+use super::{string::StringTable, Error};
 
 /// A raw representation of the headers in an ELF file.
 /// This includes the ELF headers, the program headers, and
