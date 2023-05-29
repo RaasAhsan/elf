@@ -5,3 +5,6 @@ pub mod parsed;
 /// Raw representation of ELF objects, intended to map directly to the ELF format.
 /// Suitable for zero-copy reading and loading of objects.
 pub mod raw;
+
+/// A type-safe builder for constructing valid ELF objects.
+pub mod builder;

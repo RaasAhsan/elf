@@ -5,7 +5,7 @@ use elf::{
     parsed::{
         header::ElfHeader,
         segment::{SegmentFlag, SegmentType},
-        SymbolType,
+        symbol::SymbolType,
     },
     raw::{
         dynamic::DynamicTable,

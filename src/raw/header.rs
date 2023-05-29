@@ -7,7 +7,7 @@ use super::{string::StringTable, Error};
 /// the section headers. This contains pointers to various
 /// sections in the ELF file.
 pub struct Headers<'a> {
-    pub header: &'a FileHeaders,
+    pub header: &'a FileHeader,
     pub program_headers: &'a [ProgramHeader],
     pub section_headers: &'a [SectionHeader],
     pub sh_names: StringTable<'a>,
@@ -17,7 +17,7 @@ pub struct Headers<'a> {
 /// to both little-endian/big-endian, 32-bit/64-bit computers.
 impl<'a> Headers<'a> {
     pub fn parse<A: AsRef<[u8]>>(buf: &'a A) -> Result<Headers<'a>, Error> {
-        let header = FileHeaders::parse(buf)?;
+        let header = FileHeader::parse(buf)?;
 
         if header.e_ident.magic != ELF_MAGIC {
             return Err(Error::InvalidMagicNumber);
@@ -61,14 +61,14 @@ impl<'a> Headers<'a> {
     }
 }
 
-static_assertions::const_assert!(std::mem::size_of::<FileHeaders>() == 64);
+static_assertions::const_assert!(std::mem::size_of::<FileHeader>() == 64);
 static_assertions::const_assert!(std::mem::size_of::<Ident>() == 16);
 static_assertions::const_assert!(std::mem::size_of::<ProgramHeader>() == 0x38);
 static_assertions::const_assert!(std::mem::size_of::<SectionHeader>() == 0x40);
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
-pub struct FileHeaders {
+pub struct FileHeader {
     pub e_ident: Ident,
     pub e_type: u16,
     pub e_machine: u16,
@@ -85,15 +85,15 @@ pub struct FileHeaders {
     pub e_shstrndx: u16,
 }
 
-impl FileHeaders {
-    pub fn parse<'a, A: AsRef<[u8]>>(buf: &'a A) -> Result<&'a FileHeaders, Error> {
+impl FileHeader {
+    pub fn parse<'a, A: AsRef<[u8]>>(buf: &'a A) -> Result<&'a FileHeader, Error> {
         let buf = buf.as_ref();
-        if buf.len() < std::mem::size_of::<FileHeaders>() {
+        if buf.len() < std::mem::size_of::<FileHeader>() {
             return Err(Error::Message("invalid header length".to_string()));
         }
 
-        let ptr = buf.as_ptr() as *const FileHeaders;
-        let header: &'a FileHeaders = unsafe { &*ptr };
+        let ptr = buf.as_ptr() as *const FileHeader;
+        let header: &'a FileHeader = unsafe { &*ptr };
         Ok(header)
     }
 }
@@ -126,7 +126,7 @@ pub struct ProgramHeader {
 impl ProgramHeader {
     pub fn parse_headers<'a, A: AsRef<[u8]>>(
         buf: &'a A,
-        header: &FileHeaders,
+        header: &FileHeader,
     ) -> Result<&'a [ProgramHeader], Error> {
         let offset = header.e_phoff as usize;
         let length = (header.e_phentsize as usize) * (header.e_phnum as usize);
@@ -161,7 +161,7 @@ pub struct SectionHeader {
 impl SectionHeader {
     pub fn parse_headers<'a, A: AsRef<[u8]>>(
         buf: &'a A,
-        header: &FileHeaders,
+        header: &FileHeader,
     ) -> Result<&'a [SectionHeader], Error> {
         let offset = header.e_shoff as usize;
         let length = (header.e_shentsize as usize) * (header.e_shnum as usize);

@@ -1,5 +1,20 @@
-use enumflags2::bitflags;
+use enumflags2::{bitflags, BitFlags};
 use num_derive::{FromPrimitive, ToPrimitive};
+
+use super::Address;
+
+#[derive(Debug, Clone)]
+pub struct ProgramHeader {
+    pub r#type: SegmentType,
+    pub flags: BitFlags<SegmentFlag>,
+    pub offset: u64,
+    pub vaddr: Address,
+    pub paddr: Address,
+    pub filesz: u64,
+    pub memsz: u64,
+    pub align: u64,
+    // TODO: how do we refer to the contents? byte array, parsed format, etc? redundancy in tagging
+}
 
 #[derive(Debug, Clone, ToPrimitive, FromPrimitive)]
 pub enum SegmentType {

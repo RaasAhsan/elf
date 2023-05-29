@@ -12,7 +12,7 @@ pub struct ElfHeader {
 }
 
 impl ElfHeader {
-    pub fn from_raw(hdr: &raw::header::FileHeaders) -> Result<Self, Error> {
+    pub fn from_raw(hdr: &raw::header::FileHeader) -> Result<Self, Error> {
         let class = ObjectClass::from_u8(hdr.e_ident.class).ok_or(Error::InvalidElf)?;
         let data = ObjectData::from_u8(hdr.e_ident.data).ok_or(Error::InvalidElf)?;
         let r#type = ObjectType::from_u16(hdr.e_type).ok_or(Error::InvalidElf)?;
@@ -27,10 +27,10 @@ impl ElfHeader {
     }
 }
 
-impl<'a> TryFrom<&'a raw::header::FileHeaders> for ElfHeader {
+impl<'a> TryFrom<&'a raw::header::FileHeader> for ElfHeader {
     type Error = Error;
 
-    fn try_from(hdr: &'a raw::header::FileHeaders) -> Result<Self, Self::Error> {
+    fn try_from(hdr: &'a raw::header::FileHeader) -> Result<Self, Self::Error> {
         ElfHeader::from_raw(hdr)
     }
 }
