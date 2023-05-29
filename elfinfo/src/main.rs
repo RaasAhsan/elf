@@ -145,45 +145,48 @@ fn main() {
     }
 
     if cli.symbols || cli.all {
-        let sh = elf.find_section_header(SHT_SYMTAB).unwrap();
-        let name = elf
-            .sh_names
-            .get_string(sh.sh_name as usize)
-            .to_str()
-            .unwrap();
+        if let Some(sh) = elf.find_section_header(SHT_SYMTAB) {
+            let name = elf
+                .sh_names
+                .get_string(sh.sh_name as usize)
+                .to_str()
+                .unwrap();
 
-        println!("Symbol table ({name}):");
-        println!(
-            "\t{:<4} {:<32} {:<10} {:<6} {:<16}",
-            "Num", "Name", "Value", "Size", "Type"
-        );
-
-        let symtab = SymbolTable::parse(&mmap, &elf, sh).unwrap();
-
-        // the sh_link attribute for a symtab section designates the string table for symbol names
-        let symstr_hdr = elf
-            .get_section_header_by_index(sh.sh_link as usize)
-            .unwrap();
-        let strtab = StringTable::parse(&mmap, symstr_hdr).unwrap();
-
-        for (index, sym) in symtab.iter().enumerate() {
-            let st_name = sym.st_name;
-            let st_value = sym.st_value;
-            let st_size = sym.st_size;
-            let st_info = sym.st_info;
-
-            let st_type = SymbolType::from_u8(st_info & 0xf).unwrap();
-
-            let name = if st_name == 0 {
-                ""
-            } else {
-                strtab.get_string(st_name as usize).to_str().unwrap()
-            };
-
+            println!("Symbol table ({name}):");
             println!(
-                "\t{index:>3}: {:<32} 0x{:08x} {:>6} {:?}",
-                name, st_value, st_size, st_type
+                "\t{:<4} {:<32} {:<10} {:<6} {:<16}",
+                "Num", "Name", "Value", "Size", "Type"
             );
+
+            let symtab = SymbolTable::parse(&mmap, &elf, sh).unwrap();
+
+            // the sh_link attribute for a symtab section designates the string table for symbol names
+            let symstr_hdr = elf
+                .get_section_header_by_index(sh.sh_link as usize)
+                .unwrap();
+            let strtab = StringTable::parse(&mmap, symstr_hdr).unwrap();
+
+            for (index, sym) in symtab.iter().enumerate() {
+                let st_name = sym.st_name;
+                let st_value = sym.st_value;
+                let st_size = sym.st_size;
+                let st_info = sym.st_info;
+
+                let st_type = SymbolType::from_u8(st_info & 0xf).unwrap();
+
+                let name = if st_name == 0 {
+                    ""
+                } else {
+                    strtab.get_string(st_name as usize).to_str().unwrap()
+                };
+
+                println!(
+                    "\t{index:>3}: {:<32} 0x{:08x} {:>6} {:?}",
+                    name, st_value, st_size, st_type
+                );
+            }
+        } else {
+            println!("There is no symbol table in this ELF object.");
         }
 
         println!();
