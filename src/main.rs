@@ -2,7 +2,11 @@ use std::{fs::File, path::PathBuf};
 
 use clap::Parser;
 use elf::{
-    parsed::{ObjectClass, ObjectData, ObjectType, SegmentFlag, SegmentType, SymbolType},
+    parsed::{
+        header::ElfHeader,
+        segment::{SegmentFlag, SegmentType},
+        SymbolType,
+    },
     raw::{
         dynamic::DynamicTable,
         header::Headers,
@@ -69,14 +73,9 @@ fn main() {
     // file.read_to_end(&mut buf).unwrap();
 
     let elf = Headers::parse(&mmap).unwrap();
-    // println!("{:?}", elf);
+    let header: ElfHeader = ElfHeader::from_raw(elf.header).unwrap();
 
     if cli.file_header || cli.all {
-        let machine = elf.header.e_machine;
-        let class = ObjectClass::from_u8(elf.header.e_ident.class).unwrap();
-        let elf_type = ObjectType::from_u16(elf.header.e_type).unwrap();
-        let data = ObjectData::from_u8(elf.header.e_ident.data).unwrap();
-        let entry = elf.header.e_entry;
         println!(
             "ELF file header: \n\
             \tClass: {:?} \n\
@@ -84,7 +83,7 @@ fn main() {
             \tData: {:?}\n\
             \tType: {:?}\n\
             \tEntrypoint: 0x{:08x}",
-            class, machine, data, elf_type, entry
+            header.class, header.machine, header.data, header.r#type, header.entrypoint
         );
 
         println!();
