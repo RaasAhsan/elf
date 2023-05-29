@@ -46,6 +46,16 @@ impl<'a> DynamicTable<'a> {
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Dynamic {
-    pub d_tag: u64,
-    pub d_value: u64,
+    d_tag: u64,
+    d_value: u64,
+}
+
+impl Dynamic {
+    pub fn get_tag(&self) -> u64 {
+        self.d_tag
+    }
+
+    pub fn get_value(&self) -> u64 {
+        self.d_tag
+    }
 }

@@ -20,6 +20,8 @@ pub const SHT_RELA: u32 = 0x04;
 pub const SHT_DYNAMIC: u32 = 0x06;
 pub const SHT_DYNSYM: u32 = 0x0B;
 
+pub type SymbolTableIndex = u32;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("open error: {0}")]

@@ -60,11 +60,29 @@ impl Relocation for Rel {}
 #[repr(C, packed)]
 pub struct Rela {
     /// Location at which the relocation must be applied.
-    pub r_offset: u64,
+    r_offset: u64,
     /// Symbol table index and type of relocation
-    pub r_info: u64,
+    r_info: u64,
     /// Constant addend for applying the relocation
-    pub r_addend: i64,
+    r_addend: i64,
+}
+
+impl Rela {
+    pub fn get_offset(&self) -> u64 {
+        self.r_offset
+    }
+
+    pub fn get_info(&self) -> u64 {
+        self.r_info
+    }
+
+    pub fn get_symbol(&self) -> u32 {
+        (self.r_info >> 32) as u32
+    }
+
+    pub fn get_addend(&self) -> i64 {
+        self.r_addend
+    }
 }
 
 impl Relocation for Rela {}

@@ -3,7 +3,7 @@ use crate::raw::{self};
 use super::{Address, Error};
 
 #[derive(Clone, Debug)]
-pub struct ElfHeader {
+pub struct Header {
     pub class: ObjectClass,
     pub data: ObjectData,
     pub r#type: ObjectType,
@@ -11,13 +11,13 @@ pub struct ElfHeader {
     pub entrypoint: Address,
 }
 
-impl ElfHeader {
+impl Header {
     pub fn from_raw(hdr: &raw::header::FileHeader) -> Result<Self, Error> {
         let class = ObjectClass::from_u8(hdr.e_ident.class).ok_or(Error::InvalidElf)?;
         let data = ObjectData::from_u8(hdr.e_ident.data).ok_or(Error::InvalidElf)?;
         let r#type = ObjectType::from_u16(hdr.e_type).ok_or(Error::InvalidElf)?;
 
-        Ok(ElfHeader {
+        Ok(Header {
             class,
             data,
             r#type,
@@ -27,11 +27,11 @@ impl ElfHeader {
     }
 }
 
-impl<'a> TryFrom<&'a raw::header::FileHeader> for ElfHeader {
+impl<'a> TryFrom<&'a raw::header::FileHeader> for Header {
     type Error = Error;
 
     fn try_from(hdr: &'a raw::header::FileHeader) -> Result<Self, Self::Error> {
-        ElfHeader::from_raw(hdr)
+        Header::from_raw(hdr)
     }
 }
 

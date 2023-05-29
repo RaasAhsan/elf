@@ -1,4 +1,7 @@
 #[derive(Debug, Clone)]
+pub struct SectionHeader {}
+
+#[derive(Debug, Clone)]
 pub enum SectionType {
     Null = 0x0,
     Progbits = 0x1,

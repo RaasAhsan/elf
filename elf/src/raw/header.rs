@@ -113,14 +113,40 @@ pub struct Ident {
 #[derive(Debug, Clone)]
 #[repr(C, packed)]
 pub struct ProgramHeader {
-    pub p_type: u32,
-    pub p_flags: u32,
-    pub p_offset: u64,
-    pub p_vaddr: u64,
-    pub p_paddr: u64,
-    pub p_filesz: u64,
-    pub p_memsz: u64,
-    pub p_align: u64,
+    p_type: u32,
+    p_flags: u32,
+    p_offset: u64,
+    p_vaddr: u64,
+    p_paddr: u64,
+    p_filesz: u64,
+    p_memsz: u64,
+    p_align: u64,
+}
+
+impl ProgramHeader {
+    pub fn get_vaddr(&self) -> u64 {
+        self.p_vaddr
+    }
+
+    pub fn get_memsz(&self) -> u64 {
+        self.p_memsz
+    }
+
+    pub fn get_filesz(&self) -> u64 {
+        self.p_filesz
+    }
+
+    pub fn get_offset(&self) -> u64 {
+        self.p_offset
+    }
+
+    pub fn get_flags(&self) -> u32 {
+        self.p_flags
+    }
+
+    pub fn get_type(&self) -> u32 {
+        self.p_type
+    }
 }
 
 impl ProgramHeader {

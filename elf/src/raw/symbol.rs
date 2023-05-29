@@ -3,7 +3,7 @@ use crate::raw::{SHT_DYNSYM, SHT_SYMTAB};
 use super::{
     header::{Headers, SectionHeader},
     string::StringTable,
-    Error,
+    Error, SymbolTableIndex,
 };
 
 #[derive(Debug, Clone)]
@@ -95,12 +95,34 @@ static_assertions::const_assert!(std::mem::size_of::<Symbol>() == 24);
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]
 pub struct Symbol {
-    pub st_name: u32,
-    pub st_info: u8,
-    pub st_other: u8,
-    pub st_shndx: u16,
-    pub st_value: u64,
-    pub st_size: u64,
+    st_name: SymbolTableIndex,
+    st_info: u8,
+    st_other: u8,
+    st_shndx: u16,
+    st_value: u64,
+    st_size: u64,
+}
+
+impl Symbol {
+    pub fn get_name(&self) -> SymbolTableIndex {
+        self.st_name
+    }
+
+    pub fn get_type(&self) -> u8 {
+        self.st_info & 0xf
+    }
+
+    pub fn get_bind(&self) -> u8 {
+        self.st_info >> 4
+    }
+
+    pub fn get_value(&self) -> u64 {
+        self.st_value
+    }
+
+    pub fn get_size(&self) -> u64 {
+        self.st_size
+    }
 }
 
 /// High-level symbol representation
