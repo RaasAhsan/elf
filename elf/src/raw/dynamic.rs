@@ -56,6 +56,6 @@ impl Dynamic {
     }
 
     pub fn get_value(&self) -> u64 {
-        self.d_tag
+        self.d_value
     }
 }

@@ -3,6 +3,7 @@ use std::{fs::File, path::PathBuf};
 use clap::Parser;
 use elf::{
     parsed::{
+        dynamic::DynamicTag,
         header::Header,
         segment::{SegmentFlag, SegmentType},
         symbol::SymbolType,
@@ -260,10 +261,16 @@ fn main() {
         println!("Dynamic linking information ({name}):");
         println!("\t{:<16} {:<16}", "Tag", "Value");
 
-        let symtab = DynamicTable::parse(&mmap, sh).unwrap();
+        let dyntab = DynamicTable::parse(&mmap, sh).unwrap();
 
-        for dynamic in symtab.iter() {
-            println!("\t{:016x} {:016x}", dynamic.get_tag(), dynamic.get_value());
+        for dynamic in dyntab.iter() {
+            let tag = DynamicTag::from_u64(dynamic.get_tag());
+            println!(
+                "\t{:<16} {:016x}",
+                tag.map(|t| format!("{t:?}"))
+                    .unwrap_or(format!("{:016x}", dynamic.get_tag())),
+                dynamic.get_value()
+            );
         }
 
         println!();

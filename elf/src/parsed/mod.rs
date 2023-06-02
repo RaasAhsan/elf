@@ -1,5 +1,6 @@
 use self::{header::Header, section::SectionHeader, segment::ProgramHeader};
 
+pub mod dynamic;
 pub mod header;
 pub mod section;
 pub mod segment;
