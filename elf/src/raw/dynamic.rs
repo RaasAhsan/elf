@@ -1,6 +1,9 @@
 use crate::raw::SHT_DYNAMIC;
 
-use super::{header::SectionHeader, Error};
+use super::{
+    header::{ProgramHeader, SectionHeader},
+    Error, PT_DYNAMIC,
+};
 
 #[derive(Debug, Clone)]
 pub struct DynamicTable<'a> {
@@ -8,7 +11,7 @@ pub struct DynamicTable<'a> {
 }
 
 impl<'a> DynamicTable<'a> {
-    pub fn parse<A: AsRef<[u8]>>(
+    pub fn parse_section<A: AsRef<[u8]>>(
         buf: &'a A,
         hdr: &SectionHeader,
     ) -> Result<DynamicTable<'a>, Error> {
@@ -30,6 +33,20 @@ impl<'a> DynamicTable<'a> {
         })
     }
 
+    /// Reads dynamic table from the ELF program header in virtual memory.
+    /// Precondition: all loadable segments have been mapped into virtual memory already.
+    pub fn parse_segment(base_addr: usize, hdr: &ProgramHeader) -> Result<DynamicTable<'a>, Error> {
+        if hdr.get_type() != PT_DYNAMIC {
+            return Err(Error::Message("header not PT_DYNAMIC".to_string()));
+        }
+
+        let ptr = (base_addr + hdr.get_vaddr() as usize) as *const Dynamic;
+        let entry_count = hdr.get_memsz() as usize / std::mem::size_of::<Dynamic>();
+        let entries: &'a [Dynamic] = unsafe { std::slice::from_raw_parts(ptr, entry_count) };
+
+        Ok(DynamicTable { entries })
+    }
+
     pub fn get_entry(&'a self, index: usize) -> &'a Dynamic {
         if index >= self.entries.len() {
             panic!("invalid symbol index");
@@ -42,6 +59,8 @@ impl<'a> DynamicTable<'a> {
         self.entries.iter()
     }
 }
+
+static_assertions::const_assert!(std::mem::size_of::<Dynamic>() == 16);
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C, packed)]

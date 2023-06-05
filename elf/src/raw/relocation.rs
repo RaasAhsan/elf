@@ -1,6 +1,10 @@
 use crate::raw::SHT_RELA;
 
-use super::{header::SectionHeader, Error};
+use super::{
+    dynamic::Dynamic,
+    header::{ProgramHeader, SectionHeader},
+    Error, PT_DYNAMIC,
+};
 
 // TODO: we can probably write a generic table for a fixed type, or write a macro
 
@@ -10,7 +14,7 @@ pub struct RelocationTable<'a, R: Relocation> {
 }
 
 impl<'a, R: Relocation> RelocationTable<'a, R> {
-    pub fn parse<A: AsRef<[u8]>>(
+    pub fn parse_section_header<A: AsRef<[u8]>>(
         buf: &'a A,
         hdr: &SectionHeader,
     ) -> Result<RelocationTable<'a, R>, Error> {
@@ -28,6 +32,20 @@ impl<'a, R: Relocation> RelocationTable<'a, R> {
         let relocs: &'a [R] = unsafe { std::slice::from_raw_parts(ptr, entries) };
 
         Ok(RelocationTable { relocs })
+    }
+
+    /// Reads relocation table from the dynamic table.
+    pub fn parse_rela_dynamic(dynamic: &Dynamic) -> Result<RelocationTable<'a, R>, Error> {
+        // if hdr.get_type() != PT_DYNAMIC {
+        //     return Err(Error::Message("header not PT_DYNAMIC".to_string()));
+        // }
+
+        // let ptr = hdr.get_vaddr() as *const R;
+        // let entries = (hdr.sh_size / hdr.sh_entsize) as usize;
+        // let relocs: &'a [R] = unsafe { std::slice::from_raw_parts(ptr, entries) };
+
+        // Ok(RelocationTable { relocs })
+        todo!()
     }
 
     pub fn get_relocation(&'a self, index: usize) -> &'a R {
@@ -78,6 +96,10 @@ impl Rela {
 
     pub fn get_symbol(&self) -> u32 {
         (self.r_info >> 32) as u32
+    }
+
+    pub fn get_type(&self) -> u32 {
+        (self.r_info & 0xffffffff) as u32
     }
 
     pub fn get_addend(&self) -> i64 {

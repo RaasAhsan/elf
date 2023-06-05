@@ -225,7 +225,8 @@ fn main() {
                     .get_section_header_by_index(hdr.sh_link as usize)
                     .unwrap();
 
-                let reloc_table = RelocationTable::<Rela>::parse(&mmap, hdr).unwrap();
+                let reloc_table =
+                    RelocationTable::<Rela>::parse_section_header(&mmap, hdr).unwrap();
                 let sym_table = SymbolTable::parse(&mmap, &elf, sym_hdr).unwrap();
 
                 println!("Relocation section ({name} @ 0x{:06x}):", sh_offset);
@@ -261,7 +262,7 @@ fn main() {
         println!("Dynamic linking information ({name}):");
         println!("\t{:<16} {:<16}", "Tag", "Value");
 
-        let dyntab = DynamicTable::parse(&mmap, sh).unwrap();
+        let dyntab = DynamicTable::parse_section(&mmap, sh).unwrap();
 
         for dynamic in dyntab.iter() {
             let tag = DynamicTag::from_u64(dynamic.get_tag());

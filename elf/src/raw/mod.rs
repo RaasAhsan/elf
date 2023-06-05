@@ -20,17 +20,23 @@ pub const SHT_RELA: u32 = 0x04;
 pub const SHT_DYNAMIC: u32 = 0x06;
 pub const SHT_DYNSYM: u32 = 0x0B;
 
-pub const DT_NULL: u64 = 0x00;
-pub const DT_NEEDED: u64 = 0x01;
-pub const DT_PTRRELSZ: u64 = 0x02;
-pub const DT_STRTAB: u64 = 0x05;
-pub const DT_STYTAB: u64 = 0x07;
-pub const DT_RELA: u64 = 0x08;
-pub const DT_RELASZ: u64 = 0x09;
-pub const DT_RELAENT: u64 = 10;
+pub const PT_DYNAMIC: u32 = 0x02;
+
+pub const DT_NULL: u64 = 0;
+pub const DT_NEEDED: u64 = 1;
+pub const DT_PTRRELSZ: u64 = 2;
+pub const DT_PLTGOT: u64 = 3;
+pub const DT_STRTAB: u64 = 5;
+pub const DT_SYMTAB: u64 = 6;
+pub const DT_RELA: u64 = 7;
+pub const DT_RELASZ: u64 = 8;
+pub const DT_RELAENT: u64 = 9;
+pub const DT_INIT: u64 = 12;
 pub const DT_REL: u64 = 17;
 pub const DT_RELSZ: u64 = 18;
 pub const DT_RELENT: u64 = 19;
+
+pub const R_AARCH64_RELATIV: u32 = 0x403;
 
 pub type SymbolTableIndex = u32;
 
