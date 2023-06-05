@@ -2,7 +2,7 @@ use crate::raw::SHT_DYNAMIC;
 
 use super::{
     header::{ProgramHeader, SectionHeader},
-    Error, PT_DYNAMIC,
+    Error, DT_REL, DT_RELA, PT_DYNAMIC,
 };
 
 #[derive(Debug, Clone)]
@@ -47,12 +47,20 @@ impl<'a> DynamicTable<'a> {
         Ok(DynamicTable { entries })
     }
 
+    pub fn has_relocations(&self) -> bool {
+        self.find_entry(DT_RELA).is_some()
+    }
+
     pub fn get_entry(&'a self, index: usize) -> &'a Dynamic {
         if index >= self.entries.len() {
             panic!("invalid symbol index");
         }
 
         &self.entries[index]
+    }
+
+    pub fn find_entry(&'a self, tag: u64) -> Option<&'a Dynamic> {
+        self.entries.iter().find(|t| t.get_tag() == tag)
     }
 
     pub fn iter(&'a self) -> impl Iterator<Item = &'a Dynamic> {

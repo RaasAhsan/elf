@@ -1,10 +1,6 @@
-use crate::raw::SHT_RELA;
+use crate::raw::{DT_RELA, DT_RELAENT, DT_RELASZ, SHT_RELA};
 
-use super::{
-    dynamic::Dynamic,
-    header::{ProgramHeader, SectionHeader},
-    Error, PT_DYNAMIC,
-};
+use super::{dynamic::DynamicTable, header::SectionHeader, Error};
 
 // TODO: we can probably write a generic table for a fixed type, or write a macro
 
@@ -35,17 +31,22 @@ impl<'a, R: Relocation> RelocationTable<'a, R> {
     }
 
     /// Reads relocation table from the dynamic table.
-    pub fn parse_rela_dynamic(dynamic: &Dynamic) -> Result<RelocationTable<'a, R>, Error> {
-        // if hdr.get_type() != PT_DYNAMIC {
-        //     return Err(Error::Message("header not PT_DYNAMIC".to_string()));
-        // }
+    /// Panics if no relocations present.
+    pub fn parse_rela_dynamic(
+        base: usize,
+        dynamic: &DynamicTable,
+    ) -> Result<RelocationTable<'a, Rela>, Error> {
+        let rel_addr = dynamic.find_entry(DT_RELA).unwrap();
+        let size = dynamic.find_entry(DT_RELASZ).unwrap();
+        let ent_size = dynamic.find_entry(DT_RELAENT).unwrap();
+        // TODO: assert entry size?
 
-        // let ptr = hdr.get_vaddr() as *const R;
-        // let entries = (hdr.sh_size / hdr.sh_entsize) as usize;
-        // let relocs: &'a [R] = unsafe { std::slice::from_raw_parts(ptr, entries) };
+        let entry_count = (size.get_value() / ent_size.get_value()) as usize;
 
-        // Ok(RelocationTable { relocs })
-        todo!()
+        let ptr = (base + rel_addr.get_value() as usize) as *const Rela;
+        let relocs: &'a [Rela] = unsafe { std::slice::from_raw_parts(ptr, entry_count) };
+
+        Ok(RelocationTable { relocs })
     }
 
     pub fn get_relocation(&'a self, index: usize) -> &'a R {
@@ -61,6 +62,7 @@ impl<'a, R: Relocation> RelocationTable<'a, R> {
     }
 }
 
+static_assertions::const_assert!(std::mem::size_of::<Rel>() == 16);
 static_assertions::const_assert!(std::mem::size_of::<Rela>() == 24);
 
 pub trait Relocation {}
