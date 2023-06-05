@@ -5,6 +5,7 @@ use elf::{
     parsed::{
         dynamic::DynamicTag,
         header::Header,
+        relocation::RelocationType,
         segment::{SegmentFlag, SegmentType},
         symbol::SymbolType,
     },
@@ -231,17 +232,19 @@ fn main() {
 
                 println!("Relocation section ({name} @ 0x{:06x}):", sh_offset);
                 println!(
-                    "\t{:<16} {:<16} {:<16} {:<32}",
-                    "Offset", "Info", "Addend", "Symbol Name"
+                    "\t{:<16} {:<16} {:<16} {:<24} {:<32}",
+                    "Offset", "Info", "Addend", "Type", "Symbol Name"
                 );
 
                 for reloc in reloc_table.iter() {
                     let symbol = sym_table.get_elf_symbol(reloc.get_symbol() as usize); // TODO: factor this out
+                    let reloc_type = RelocationType::from_u32(reloc.get_type());
                     println!(
-                        "\t{:016x} {:016x} {:016x} {sym_name:<32}",
+                        "\t{:016x} {:016x} {:016x} {:<24?} {sym_name:<32}",
                         reloc.get_offset(),
                         reloc.get_info(),
                         reloc.get_addend(),
+                        reloc_type,
                         sym_name = symbol.name
                     );
                 }
